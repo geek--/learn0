@@ -45,8 +45,21 @@ class CampaignRecipient(models.Model):
     recipient = models.ForeignKey(Recipient, on_delete=models.CASCADE, related_name="campaigns")
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
     tracking_token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    sent_at = models.DateTimeField(null=True, blank=True)
     opened_at = models.DateTimeField(null=True, blank=True)
+    open_seen_at = models.DateTimeField(null=True, blank=True)
+    open_signal_quality = models.CharField(max_length=16, blank=True)
     clicked_at = models.DateTimeField(null=True, blank=True)
+    click_count = models.PositiveIntegerField(default=0)
+    landing_viewed_at = models.DateTimeField(null=True, blank=True)
+    landing_view_count = models.PositiveIntegerField(default=0)
+    cta_clicked_at = models.DateTimeField(null=True, blank=True)
+    submit_attempt_at = models.DateTimeField(null=True, blank=True)
+    submit_attempted = models.BooleanField(default=False)
+    reported_at = models.DateTimeField(null=True, blank=True)
+    report_channel = models.CharField(max_length=32, blank=True)
+    time_to_click_seconds = models.PositiveIntegerField(null=True, blank=True)
+    time_to_report_seconds = models.PositiveIntegerField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -60,12 +73,26 @@ class EmailEvent(models.Model):
     class EventType(models.TextChoices):
         OPEN = "open", "Open"
         CLICK = "click", "Click"
+        LANDING_VIEW = "landing_view", "Landing view"
+        CTA_CLICK = "cta_click", "CTA click"
+        SUBMIT_ATTEMPT = "submit_attempt", "Submit attempt"
+        REPORT = "report", "Report"
 
     recipient = models.ForeignKey(CampaignRecipient, on_delete=models.CASCADE, related_name="events")
     event_type = models.CharField(max_length=16, choices=EventType.choices)
-    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    ip_address_truncated = models.CharField(max_length=64, blank=True)
+    ip_hash = models.CharField(max_length=128, blank=True)
     user_agent = models.TextField(blank=True)
     referer = models.TextField(blank=True)
+    device_type = models.CharField(max_length=16, blank=True)
+    os_family = models.CharField(max_length=32, blank=True)
+    browser_family = models.CharField(max_length=32, blank=True)
+    email_client_hint = models.CharField(max_length=32, blank=True)
+    message_provider_hint = models.CharField(max_length=32, blank=True)
+    is_webview = models.BooleanField(default=False)
+    language = models.CharField(max_length=64, blank=True)
+    timezone_offset_minutes = models.IntegerField(null=True, blank=True)
+    open_signal_quality = models.CharField(max_length=16, blank=True)
     metadata = models.JSONField(default=dict, blank=True)
     created_at = models.DateTimeField(default=timezone.now)
 

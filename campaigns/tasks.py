@@ -25,7 +25,8 @@ def process_campaigns() -> int:
                 with transaction.atomic():
                     send_campaign_email(campaign_recipient)
                     campaign_recipient.status = CampaignRecipient.Status.SENT
-                    campaign_recipient.save(update_fields=["status"])
+                    campaign_recipient.sent_at = timezone.now()
+                    campaign_recipient.save(update_fields=["status", "sent_at"])
                     AuditLog.objects.create(
                         action="campaign_email_sent",
                         actor=campaign.created_by,

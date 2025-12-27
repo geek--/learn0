@@ -20,7 +20,13 @@ def build_tracking_urls(campaign_recipient: CampaignRecipient) -> dict[str, str]
     return {
         "tracking_pixel": f"{base_url}{reverse('campaigns:track-open', kwargs={'token': campaign_recipient.tracking_token})}",
         "click_url": f"{base_url}{reverse('campaigns:track-click', kwargs={'token': campaign_recipient.tracking_token})}",
-        "landing_url": f"{base_url}{reverse('campaigns:landing', kwargs={'landing_slug': campaign_recipient.campaign.landing_slug})}",
+        "cta_url": f"{base_url}{reverse('campaigns:track-cta', kwargs={'token': campaign_recipient.tracking_token})}",
+        "submit_url": f"{base_url}{reverse('campaigns:track-submit', kwargs={'token': campaign_recipient.tracking_token})}",
+        "report_url": f"{base_url}{reverse('campaigns:track-report', kwargs={'token': campaign_recipient.tracking_token})}",
+        "landing_url": (
+            f"{base_url}{reverse('campaigns:landing', kwargs={'landing_slug': campaign_recipient.campaign.landing_slug})}"
+            f"?t={campaign_recipient.tracking_token}"
+        ),
     }
 
 
@@ -41,6 +47,9 @@ def send_campaign_email(campaign_recipient: CampaignRecipient) -> None:
         "tracking_pixel": f'<img src="{urls["tracking_pixel"]}" width="1" height="1" style="display:none;" alt="" />',
         "click_url": urls["click_url"],
         "landing_url": urls["landing_url"],
+        "cta_url": urls["cta_url"],
+        "submit_url": urls["submit_url"],
+        "report_url": urls["report_url"],
         "recipient_email": recipient.email,
         "recipient_name": recipient.full_name or recipient.email,
         "campaign_name": campaign.name,

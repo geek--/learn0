@@ -8,6 +8,9 @@ Placeholders disponibles
 - {{ campaign_name }}
 - {{ click_url }}
 - {{ landing_url }}
+- {{ cta_url }}
+- {{ submit_url }}
+- {{ report_url }}
 - {{ tracking_pixel }}  (se inserta automáticamente si no lo incluyes)
 
 Nota: Estas plantillas aceptan HTML básico.
@@ -21,7 +24,7 @@ Estamos realizando una prueba de concientización sobre seguridad.
 <br>
 Por favor revisa la siguiente guía y confirma tu lectura:
 <br>
-<a href="{{ click_url }}">Confirmar lectura</a>
+<a href="{{ cta_url }}">Confirmar lectura</a>
 <br><br>
 Si tienes dudas, visita: <a href="{{ landing_url }}">Centro de seguridad</a>
 <br><br>

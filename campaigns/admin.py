@@ -18,13 +18,31 @@ class RecipientAdmin(admin.ModelAdmin):
 
 @admin.register(CampaignRecipient)
 class CampaignRecipientAdmin(admin.ModelAdmin):
-    list_display = ("campaign", "recipient", "status", "created_at")
-    list_filter = ("status",)
+    list_display = (
+        "campaign",
+        "recipient",
+        "status",
+        "sent_at",
+        "opened_at",
+        "clicked_at",
+        "click_count",
+        "landing_viewed_at",
+        "landing_view_count",
+    )
+    list_filter = ("status", "opened_at", "clicked_at")
     search_fields = ("campaign__name", "recipient__email")
 
 
 @admin.register(EmailEvent)
 class EmailEventAdmin(admin.ModelAdmin):
-    list_display = ("event_type", "recipient", "ip_address", "created_at")
+    list_display = (
+        "event_type",
+        "recipient",
+        "device_type",
+        "os_family",
+        "browser_family",
+        "email_client_hint",
+        "created_at",
+    )
     list_filter = ("event_type", "created_at")
     search_fields = ("recipient__recipient__email", "recipient__campaign__name")
