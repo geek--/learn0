@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from campaigns.models import Campaign, CampaignRecipient, Recipient
+from campaigns.models import Campaign, CampaignRecipient, EmailEvent, Recipient
 
 
 @admin.register(Campaign)
@@ -21,3 +21,10 @@ class CampaignRecipientAdmin(admin.ModelAdmin):
     list_display = ("campaign", "recipient", "status", "created_at")
     list_filter = ("status",)
     search_fields = ("campaign__name", "recipient__email")
+
+
+@admin.register(EmailEvent)
+class EmailEventAdmin(admin.ModelAdmin):
+    list_display = ("event_type", "recipient", "ip_address", "created_at")
+    list_filter = ("event_type", "created_at")
+    search_fields = ("recipient__recipient__email", "recipient__campaign__name")
