@@ -1,0 +1,61 @@
+Plantillas de ejemplo para usar en Campaign.email_template
+=========================================================
+
+Placeholders disponibles
+------------------------
+- {{ recipient_name }}
+- {{ recipient_email }}
+- {{ campaign_name }}
+- {{ click_url }}
+- {{ landing_url }}
+- {{ tracking_pixel }}  (se inserta automáticamente si no lo incluyes)
+
+Nota: Estas plantillas aceptan HTML básico.
+
+
+1) Aviso de seguridad (HTML simple)
+-----------------------------------
+Hola {{ recipient_name }},
+<br><br>
+Estamos realizando una prueba de concientización sobre seguridad.
+<br>
+Por favor revisa la siguiente guía y confirma tu lectura:
+<br>
+<a href="{{ click_url }}">Confirmar lectura</a>
+<br><br>
+Si tienes dudas, visita: <a href="{{ landing_url }}">Centro de seguridad</a>
+<br><br>
+Gracias,
+<br>
+Equipo de Seguridad
+
+
+2) Simulación de política nueva
+-------------------------------
+Hola {{ recipient_name }},
+<br><br>
+Se actualizó la política de contraseñas. Debes revisar los cambios aquí:
+<br>
+<a href="{{ click_url }}">Ver cambios de la política</a>
+<br><br>
+Tu correo registrado es: {{ recipient_email }}
+<br>
+Campaña: {{ campaign_name }}
+<br><br>
+Gracias.
+
+
+3) Recordatorio de capacitación
+-------------------------------
+Hola {{ recipient_name }},
+<br><br>
+Tienes una capacitación pendiente asignada.
+<br>
+Accede al material en el siguiente enlace:
+<br>
+<a href="{{ click_url }}">Acceder a capacitación</a>
+<br><br>
+Si el enlace no funciona, entra al portal:
+{{ landing_url }}
+<br><br>
+Equipo de Compliance
