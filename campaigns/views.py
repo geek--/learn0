@@ -1,9 +1,5 @@
 from __future__ import annotations
 
-import json
-
-import json
-
 from django.db import models
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
@@ -372,409 +368,349 @@ def dashboard(request):
         )
 
     total_count = totals["count"] or 1
-    open_rate = int((totals["opened"] / total_count) * 100)
-    landing_rate = int((totals["landing"] / total_count) * 100)
-    cta_rate = int((totals["cta"] / total_count) * 100)
-    report_rate = int((totals["reported"] / total_count) * 100)
-    chart_payload = {
-        "labels": list(criticality_counts.keys()),
-        "counts": list(criticality_counts.values()),
-        "funnel_labels": [
-            "Enviados",
-            "Abiertos",
-            "Landing",
-            "CTA",
-            "Reportados",
-            "Rebotados",
-        ],
-        "funnel_counts": [
-            totals["sent"],
-            totals["opened"],
-            totals["landing"],
-            totals["cta"],
-            totals["reported"],
-            totals["bounced"],
-        ],
-        "rates": [open_rate, landing_rate, cta_rate, report_rate],
-    }
+    metric_tiles = [
+        {"label": "Recipients", "value": totals["count"], "percent": None, "tone": "neutral"},
+        {"label": "Delivered", "value": totals["sent"], "percent": int((totals["sent"] / total_count) * 100), "tone": "teal"},
+        {"label": "Opened", "value": totals["opened"], "percent": int((totals["opened"] / total_count) * 100), "tone": "teal"},
+        {"label": "Clicked", "value": totals["cta"], "percent": int((totals["cta"] / total_count) * 100), "tone": "red"},
+        {"label": "QR Code Scanned", "value": totals["landing"], "percent": int((totals["landing"] / total_count) * 100), "tone": "red"},
+        {"label": "Replied", "value": 0, "percent": 0, "tone": "red"},
+        {"label": "Attachment Opened", "value": 0, "percent": 0, "tone": "red"},
+        {"label": "Macro Enabled", "value": 0, "percent": 0, "tone": "red"},
+        {"label": "Data Entered", "value": 0, "percent": 0, "tone": "red"},
+        {"label": "Reported", "value": totals["reported"], "percent": int((totals["reported"] / total_count) * 100), "tone": "green"},
+        {"label": "Bounced", "value": totals["bounced"], "percent": int((totals["bounced"] / total_count) * 100), "tone": "teal"},
+    ]
+
+    def _format_datetime(value):
+        return value.strftime("%d/%m/%Y, %H:%M") if value else "--"
+
+    table_rows = []
+    for item in recipients:
+        criticality = _criticality_label(item)
+        if selected_criticality and selected_criticality != criticality:
+            continue
+        opened_at = item.opened_at or item.open_seen_at
+        table_rows.append(
+            f"""
+            <tr>
+              <td class="name-cell">
+                <div class="name">{escape(item.recipient.full_name or item.recipient.email)}</div>
+                <div class="email">{escape(item.recipient.email)} · {escape(item.recipient.department or 'Sin área')}</div>
+                <div class="tags">
+                  <span class="status-pill">{escape(item.get_status_display())}</span>
+                  <span class="badge {escape(_criticality_badge_class(criticality))}">{escape(criticality)}</span>
+                </div>
+              </td>
+              <td>{escape(_format_datetime(item.created_at))}</td>
+              <td>{escape(_format_datetime(item.sent_at))}</td>
+              <td>{escape(_format_datetime(opened_at))}</td>
+              <td>{escape(_format_datetime(item.cta_clicked_at))}</td>
+              <td>{escape(_format_datetime(item.landing_viewed_at))}</td>
+              <td>--</td>
+              <td>--</td>
+              <td>--</td>
+              <td>{escape(_format_datetime(item.submit_attempt_at)) if item.submit_attempted else '--'}</td>
+              <td>{escape(_format_datetime(item.reported_at))}</td>
+              <td class="preview-cell">
+                <a class="mail-link" href="mailto:{escape(item.recipient.email)}" aria-label="Email preview">
+                  ✉️
+                </a>
+              </td>
+            </tr>
+            """
+        )
+
+    metric_cards = []
+    for tile in metric_tiles:
+        percent = f'<div class="metric-percent">{tile["percent"]}%</div>' if tile["percent"] is not None else ""
+        metric_cards.append(
+            f"""
+            <div class="metric-card {tile["tone"]}">
+              <div class="metric-top">{percent}</div>
+              <div class="metric-value">{tile["value"]}</div>
+              <div class="metric-label">{tile["label"]}</div>
+            </div>
+            """
+        )
 
     body = f"""
     <html lang="es">
       <head>
         <meta charset="utf-8" />
-        <title>Dashboard de interacción</title>
+        <title>Dashboard v2</title>
         <style>
           body {{
             margin: 0;
             font-family: "Inter", "Segoe UI", sans-serif;
-            background: radial-gradient(circle at top, #0c1b2a 0%, #070b12 45%, #05070c 100%);
-            color: #e6f1ff;
+            background: #f4f6fa;
+            color: #2b2f33;
           }}
-          header {{
-            padding: 32px 48px 12px;
+          .page {{
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px 32px 48px;
           }}
-          header h1 {{
-            font-size: 28px;
-            margin: 0;
+          .tabs {{
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+            border-bottom: 1px solid #d9dee6;
+            margin-bottom: 18px;
           }}
-          header p {{
-            margin: 8px 0 0;
-            color: #9cb4d3;
+          .tab {{
+            padding: 14px 22px;
+            border-radius: 12px 12px 0 0;
+            background: transparent;
+            color: #3a7ac0;
+            font-weight: 500;
+          }}
+          .tab.active {{
+            background: #ffffff;
+            color: #4a4f55;
+            border: 1px solid #d9dee6;
+            border-bottom: none;
+            box-shadow: 0 -2px 10px rgba(61, 70, 84, 0.08);
+          }}
+          .metrics {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 26px;
+          }}
+          .metric-card {{
+            background: #ffffff;
+            border: 1px solid #e6ebf2;
+            border-top: 5px solid #e6ebf2;
+            border-radius: 8px;
+            padding: 14px 12px;
+            text-align: center;
+            min-height: 120px;
+          }}
+          .metric-card.neutral {{ border-top-color: #9aa3ad; }}
+          .metric-card.teal {{ border-top-color: #08a1b5; }}
+          .metric-card.red {{ border-top-color: #e23b47; }}
+          .metric-card.green {{ border-top-color: #2ca844; }}
+          .metric-top {{
+            font-size: 12px;
+            color: #9aa3ad;
+            min-height: 16px;
+          }}
+          .metric-value {{
+            font-size: 26px;
+            font-weight: 600;
+            margin-top: 10px;
+          }}
+          .metric-label {{
+            margin-top: 6px;
+            font-size: 14px;
+            color: #4a4f55;
           }}
           .filters {{
-            padding: 0 48px 8px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 16px;
-          }}
-          .filters select {{
-            width: 100%;
-            padding: 10px 12px;
-            border-radius: 10px;
-            border: 1px solid #203246;
-            background: #0c1624;
-            color: #e6f1ff;
-          }}
-          .filters input {{
-            width: 100%;
-            padding: 10px 12px;
-            border-radius: 10px;
-            border: 1px solid #203246;
-            background: #0c1624;
-            color: #e6f1ff;
-          }}
-          .summary {{
-            padding: 0 48px 24px;
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 16px;
-          }}
-          .charts {{
-            padding: 0 48px 32px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 16px;
-          }}
-          .chart-card {{
-            background: #0c1624;
-            border: 1px solid #1f2c3e;
-            border-radius: 16px;
-            padding: 16px 20px;
-          }}
-          .chart-card h3 {{
-            margin: 0 0 12px;
-            font-size: 14px;
-            color: #9cb4d3;
-          }}
-          .summary-card {{
-            background: #0c1624;
-            border: 1px solid #1f2c3e;
-            border-radius: 16px;
-            padding: 16px 20px;
-          }}
-          .summary-card h2 {{
-            margin: 0;
-            font-size: 22px;
-          }}
-          .summary-card span {{
-            color: #9cb4d3;
-            font-size: 13px;
-          }}
-          .summary-card strong {{
-            display: block;
-            font-size: 24px;
-            margin-top: 6px;
-          }}
-          .flows {{
-            padding: 0 48px 48px;
-            display: grid;
-            gap: 16px;
-          }}
-          .flow-row {{
-            background: #0c1624;
-            border: 1px solid #1f2c3e;
-            border-radius: 18px;
-            padding: 20px;
-            box-shadow: 0 10px 24px rgba(1, 6, 14, 0.3);
-            position: relative;
-          }}
-          .flow-row.critical::before {{
-            content: "";
-            position: absolute;
-            inset: 0 0 0 0;
-            border-radius: 18px;
-            border-left: 4px solid #ff5b5b;
-          }}
-          .flow-row.high::before {{
-            content: "";
-            position: absolute;
-            inset: 0 0 0 0;
-            border-radius: 18px;
-            border-left: 4px solid #ff9933;
-          }}
-          .flow-row.medium::before {{
-            content: "";
-            position: absolute;
-            inset: 0 0 0 0;
-            border-radius: 18px;
-            border-left: 4px solid #4da0ff;
-          }}
-          .flow-row.low::before {{
-            content: "";
-            position: absolute;
-            inset: 0 0 0 0;
-            border-radius: 18px;
-            border-left: 4px solid #30dcae;
-          }}
-          .flow-row.none::before {{
-            content: "";
-            position: absolute;
-            inset: 0 0 0 0;
-            border-radius: 18px;
-            border-left: 4px solid #4d596f;
-          }}
-          .flow-header {{
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 16px;
-          }}
-          .flow-header h3 {{
-            margin: 0;
-            font-size: 18px;
-          }}
-          .flow-header p {{
-            margin: 6px 0 0;
-            color: #9cb4d3;
-            font-size: 13px;
-          }}
-          .flow-meta {{
-            display: flex;
-            gap: 10px;
-            align-items: center;
-          }}
-          .status-pill {{
-            padding: 6px 10px;
-            border-radius: 999px;
-            background: #142236;
-            font-size: 12px;
-            color: #b6c9e8;
-            border: 1px solid #22384d;
-          }}
-          .badge {{
-            padding: 6px 12px;
-            border-radius: 999px;
-            font-size: 12px;
-            font-weight: 600;
-          }}
-          .badge-critical {{ background: rgba(255, 89, 89, 0.18); color: #ff8b8b; border: 1px solid #ff5b5b; }}
-          .badge-high {{ background: rgba(255, 153, 51, 0.15); color: #ffb57a; border: 1px solid #ff9933; }}
-          .badge-medium {{ background: rgba(77, 160, 255, 0.15); color: #7bb7ff; border: 1px solid #4da0ff; }}
-          .badge-low {{ background: rgba(48, 220, 174, 0.15); color: #6ff3cb; border: 1px solid #30dcae; }}
-          .badge-none {{ background: rgba(108, 118, 140, 0.2); color: #c0c7d6; border: 1px solid #4d596f; }}
-          .flow-steps {{
-            margin-top: 16px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 10px;
-          }}
-          .flow-step {{
-            background: #111d2c;
-            border-radius: 12px;
-            padding: 10px;
-            border: 1px dashed #223447;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            color: #9cb4d3;
-            min-height: 56px;
-          }}
-          .flow-step.active {{
-            border: 1px solid #28d3ff;
-            color: #e6f1ff;
-            background: linear-gradient(135deg, rgba(40, 211, 255, 0.2), rgba(13, 32, 50, 0.9));
-          }}
-          .flow-step span {{
-            font-size: 13px;
-            font-weight: 600;
-          }}
-          .flow-step small {{
-            font-size: 11px;
-          }}
-          .flow-footer {{
-            margin-top: 12px;
-            display: flex;
-            justify-content: space-between;
-            color: #9cb4d3;
-            font-size: 12px;
-          }}
-          .empty {{
-            background: #0c1624;
-            border: 1px dashed #22384d;
-            border-radius: 16px;
-            padding: 32px;
-            text-align: center;
-            color: #9cb4d3;
+            gap: 12px;
+            margin-bottom: 20px;
           }}
           .filters form {{
             display: contents;
           }}
+          .filters select,
+          .filters input {{
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid #d9dee6;
+            background: #ffffff;
+            font-size: 14px;
+          }}
           .filters button {{
             padding: 10px 16px;
-            border-radius: 10px;
-            background: #28d3ff;
-            color: #05101c;
-            border: none;
+            border-radius: 8px;
+            border: 1px solid #2e7bbf;
+            background: #2e7bbf;
+            color: #ffffff;
             font-weight: 600;
             cursor: pointer;
           }}
-          .toolbar {{
-            padding: 0 48px 16px;
+          .table-toolbar {{
             display: flex;
             justify-content: space-between;
             align-items: center;
-            color: #9cb4d3;
+            margin: 8px 0 12px;
+          }}
+          .search {{
+            position: relative;
+            flex: 1;
+            max-width: 420px;
+          }}
+          .search input {{
+            width: 100%;
+            padding: 10px 12px 10px 36px;
+            border-radius: 8px;
+            border: 1px solid #d9dee6;
+          }}
+          .search span {{
+            position: absolute;
+            left: 12px;
+            top: 10px;
+            color: #7c8694;
+          }}
+          .actions {{
+            display: flex;
+            gap: 18px;
+            font-weight: 600;
+          }}
+          .actions a {{
+            text-decoration: none;
+            color: #2e7bbf;
+          }}
+          .actions a.download {{
+            color: #3a8b2c;
+          }}
+          table {{
+            width: 100%;
+            border-collapse: collapse;
+            background: #ffffff;
+            border: 1px solid #e6ebf2;
+          }}
+          thead th {{
+            text-align: left;
+            font-size: 13px;
+            color: #4a4f55;
+            padding: 14px 12px;
+            border-bottom: 2px solid #e6ebf2;
+          }}
+          tbody td {{
+            padding: 14px 12px;
+            border-bottom: 1px solid #eef1f6;
+            font-size: 13px;
+            color: #3b4148;
+          }}
+          tbody tr:hover {{
+            background: #f7f9fc;
+          }}
+          .name-cell .name {{
+            font-weight: 600;
+          }}
+          .name-cell .email {{
+            margin-top: 4px;
+            color: #7c8694;
             font-size: 12px;
           }}
-          .toolbar .hint {{
+          .tags {{
+            margin-top: 6px;
             display: flex;
-            gap: 10px;
-            align-items: center;
-          }}
-          .legend {{
-            padding: 0 48px 12px;
-            display: flex;
-            gap: 12px;
+            gap: 8px;
             flex-wrap: wrap;
-            color: #9cb4d3;
-            font-size: 12px;
           }}
-          .legend span {{
+          .status-pill {{
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: #eef2f7;
+            color: #5c6570;
+            font-size: 11px;
+          }}
+          .badge {{
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+          }}
+          .badge-critical {{ background: rgba(226, 59, 71, 0.12); color: #cc2f39; border: 1px solid #e23b47; }}
+          .badge-high {{ background: rgba(245, 159, 33, 0.12); color: #d68612; border: 1px solid #f59f21; }}
+          .badge-medium {{ background: rgba(59, 130, 246, 0.12); color: #2d6fd3; border: 1px solid #3b82f6; }}
+          .badge-low {{ background: rgba(21, 187, 131, 0.12); color: #139c6f; border: 1px solid #15bb83; }}
+          .badge-none {{ background: rgba(124, 134, 148, 0.12); color: #6b7480; border: 1px solid #c2c8d1; }}
+          .preview-cell {{
+            text-align: center;
+          }}
+          .mail-link {{
             display: inline-flex;
+            width: 32px;
+            height: 32px;
             align-items: center;
-            gap: 6px;
+            justify-content: center;
+            border-radius: 8px;
+            background: #eef2f7;
           }}
-          .legend i {{
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            display: inline-block;
+          .empty {{
+            background: #ffffff;
+            border: 1px dashed #d9dee6;
+            border-radius: 12px;
+            padding: 32px;
+            text-align: center;
+            color: #7c8694;
           }}
         </style>
       </head>
       <body>
-        <header>
-          <h1>Dashboard de interacción con campañas</h1>
-          <p>Visualiza el flujo de cada usuario frente a la campaña, criticidad y puntos de contacto.</p>
-        </header>
-        <section class="filters">
-          <form method="get">
-            <select name="campaign">
-              <option value="">Todas las campañas</option>
-              {"".join([f'<option value="{c.id}" {"selected" if str(c.id) == selected_campaign else ""}>{escape(c.name)}</option>' for c in campaigns])}
-            </select>
-            <select name="department">
-              <option value="">Todas las áreas</option>
-              {"".join([f'<option value="{escape(dep)}" {"selected" if dep == selected_department else ""}>{escape(dep)}</option>' for dep in all_departments])}
-            </select>
-            <select name="status">
-              <option value="">Todos los estados</option>
-              {"".join([f'<option value="{choice}" {"selected" if choice == selected_status else ""}>{label}</option>' for choice, label in CampaignRecipient.Status.choices])}
-            </select>
-            <select name="criticality">
-              <option value="">Todas las criticidades</option>
-              {"".join([f'<option value="{label}" {"selected" if label == selected_criticality else ""}>{label}</option>' for label in ["Crítica", "Alta", "Media", "Baja", "Sin señales"]])}
-            </select>
-            <input type="search" name="q" placeholder="Buscar por usuario o email" value="{escape(search_term)}" />
-            <button type="submit">Filtrar</button>
-          </form>
-        </section>
-        <section class="toolbar">
-          <div class="hint">Filtros aplicados: {totals["count"]} usuarios</div>
-          <div class="hint">Actualizado en tiempo real con los eventos de la campaña</div>
-        </section>
-        <section class="summary">
-          <div class="summary-card">
-            <span>Usuarios filtrados</span>
-            <strong>{totals["count"]}</strong>
+        <div class="page">
+          <div class="tabs">
+            <div class="tab">Overview</div>
+            <div class="tab active">Users</div>
           </div>
-          <div class="summary-card">
-            <span>Enviados</span>
-            <strong>{totals["sent"]}</strong>
-          </div>
-          <div class="summary-card">
-            <span>Aperturas</span>
-            <strong>{open_rate}%</strong>
-          </div>
-          <div class="summary-card">
-            <span>CTA</span>
-            <strong>{cta_rate}%</strong>
-          </div>
-          <div class="summary-card">
-            <span>Reportes</span>
-            <strong>{report_rate}%</strong>
-          </div>
-        </section>
-        <section class="charts">
-          <div class="chart-card">
-            <h3>Distribución por criticidad</h3>
-            <canvas id="criticalityChart" height="180"></canvas>
-          </div>
-          <div class="chart-card">
-            <h3>Embudo de interacción</h3>
-            <canvas id="funnelChart" height="180"></canvas>
-          </div>
-        </section>
-        <section class="legend">
-          <span><i style="background:#ff5b5b;"></i>Crítica</span>
-          <span><i style="background:#ff9933;"></i>Alta</span>
-          <span><i style="background:#4da0ff;"></i>Media</span>
-          <span><i style="background:#30dcae;"></i>Baja</span>
-          <span><i style="background:#4d596f;"></i>Sin señales</span>
-        </section>
-        <section class="flows">
-          {''.join(rows) if rows else '<div class="empty">No hay resultados con estos filtros.</div>'}
-        </section>
-        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-        <script>
-          const payload = {json.dumps(chart_payload)};
-          const criticalityCtx = document.getElementById("criticalityChart");
-          const funnelCtx = document.getElementById("funnelChart");
-          const criticalityColors = ["#ff5b5b", "#ff9933", "#4da0ff", "#30dcae", "#4d596f"];
-          new Chart(criticalityCtx, {{
-            type: "doughnut",
-            data: {{
-              labels: payload.labels,
-              datasets: [{{ data: payload.counts, backgroundColor: criticalityColors }}],
-            }},
-            options: {{
-              plugins: {{
-                legend: {{ labels: {{ color: "#e6f1ff" }} }},
-              }},
-            }},
-          }});
-          new Chart(funnelCtx, {{
-            type: "bar",
-            data: {{
-              labels: payload.funnel_labels,
-              datasets: [{{
-                label: "Usuarios",
-                data: payload.funnel_counts,
-                backgroundColor: ["#28d3ff", "#30dcae", "#4da0ff", "#ff9933", "#ff5b5b", "#4d596f"],
-                borderRadius: 8,
-              }}],
-            }},
-            options: {{
-              scales: {{
-                x: {{ ticks: {{ color: "#9cb4d3" }} }},
-                y: {{ ticks: {{ color: "#9cb4d3" }}, beginAtZero: true }},
-              }},
-              plugins: {{
-                legend: {{ labels: {{ color: "#e6f1ff" }} }},
-              }},
-            }},
-          }});
-        </script>
+          <section class="metrics">
+            {"".join(metric_cards)}
+          </section>
+          <section class="filters">
+            <form method="get">
+              <select name="campaign">
+                <option value="">Todas las campañas</option>
+                {"".join([f'<option value="{c.id}" {"selected" if str(c.id) == selected_campaign else ""}>{escape(c.name)}</option>' for c in campaigns])}
+              </select>
+              <select name="department">
+                <option value="">Todas las áreas</option>
+                {"".join([f'<option value="{escape(dep)}" {"selected" if dep == selected_department else ""}>{escape(dep)}</option>' for dep in all_departments])}
+              </select>
+              <select name="status">
+                <option value="">Todos los estados</option>
+                {"".join([f'<option value="{choice}" {"selected" if choice == selected_status else ""}>{label}</option>' for choice, label in CampaignRecipient.Status.choices])}
+              </select>
+              <select name="criticality">
+                <option value="">Todas las criticidades</option>
+                {"".join([f'<option value="{label}" {"selected" if label == selected_criticality else ""}>{label}</option>' for label in ["Crítica", "Alta", "Media", "Baja", "Sin señales"]])}
+              </select>
+              <input type="search" name="q" placeholder="Buscar por usuario o email" value="{escape(search_term)}" />
+              <button type="submit">Filtrar</button>
+            </form>
+          </section>
+          <section class="table-toolbar">
+            <div class="search">
+              <span>🔍</span>
+              <input type="text" value="{escape(search_term)}" placeholder="Search for users by name or email" />
+            </div>
+            <div class="actions">
+              <a href="#">↻ Bulk Update</a>
+              <a class="download" href="#">⬇ Download CSV</a>
+            </div>
+          </section>
+          <section class="table-section">
+            {f'''
+            <table>
+              <thead>
+                <tr>
+                  <th>Name and Email</th>
+                  <th>Scheduled</th>
+                  <th>Delivered</th>
+                  <th>Opened</th>
+                  <th>Clicked</th>
+                  <th>QR Code Scanned</th>
+                  <th>Replied</th>
+                  <th>Attachment Opened</th>
+                  <th>Macro Enabled</th>
+                  <th>Data Entered</th>
+                  <th>Reported</th>
+                  <th>Email Preview</th>
+                </tr>
+              </thead>
+              <tbody>
+                {''.join(table_rows)}
+              </tbody>
+            </table>
+            ''' if table_rows else '<div class="empty">No hay resultados con estos filtros.</div>'}
+          </section>
+        </div>
       </body>
     </html>
     """
