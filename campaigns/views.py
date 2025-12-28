@@ -405,7 +405,68 @@ def dashboard(request):
     def _format_datetime(value):
         return value.strftime("%d/%m/%Y, %H:%M") if value else "--"
 
-    body = f"""
+    def _format_datetime(value):
+        return value.strftime("%d/%m/%Y, %H:%M") if value else "--"
+
+    table_rows = []
+    for item in recipients:
+        criticality = _criticality_label(item)
+        if selected_criticality and selected_criticality != criticality:
+            continue
+        opened_at = item.opened_at or item.open_seen_at
+        table_rows.append(
+            f"""
+            <tr>
+              <td class="name-cell">
+                <div class="name">{escape(item.recipient.full_name or item.recipient.email)}</div>
+                <div class="email">{escape(item.recipient.email)} · {escape(item.recipient.department or 'Sin área')}</div>
+                <div class="tags">
+                  <span class="status-pill">{escape(item.get_status_display())}</span>
+                  <span class="badge {escape(_criticality_badge_class(criticality))}">{escape(criticality)}</span>
+                </div>
+              </td>
+              <td>{escape(_format_datetime(item.created_at))}</td>
+              <td>{escape(_format_datetime(item.sent_at))}</td>
+              <td>{escape(_format_datetime(opened_at))}</td>
+              <td>{escape(_format_datetime(item.cta_clicked_at))}</td>
+              <td>{escape(_format_datetime(item.landing_viewed_at))}</td>
+              <td>--</td>
+              <td>--</td>
+              <td>--</td>
+              <td>{escape(_format_datetime(item.submit_attempt_at)) if item.submit_attempted else '--'}</td>
+              <td>{escape(_format_datetime(item.reported_at))}</td>
+              <td class="preview-cell">
+                <a class="mail-link" href="mailto:{escape(item.recipient.email)}" aria-label="Email preview">
+                  ✉️
+                </a>
+              </td>
+            </tr>
+            """
+        )
+
+    metric_cards = []
+    for tile in metric_tiles:
+        percent = f'<div class="metric-percent">{tile["percent"]}%</div>' if tile["percent"] is not None else ""
+        metric_cards.append(
+            f"""
+            <div class="metric-card {tile["tone"]}">
+              <div class="metric-top">{percent}</div>
+              <div class="metric-value">{tile["value"]}</div>
+              <div class="metric-label">{tile["label"]}</div>
+            </div>
+            """
+        )
+
+    version = request.GET.get("version", "v2")
+    tabs = f"""
+      <div class="version-tabs">
+        <a class="{ 'active' if version == 'v1' else '' }" href="?version=v1">Dashboard v1</a>
+        <a class="{ 'active' if version == 'v2' else '' }" href="?version=v2">Dashboard v2</a>
+        <a class="{ 'active' if version == 'v3' else '' }" href="?version=v3">Dashboard v3</a>
+      </div>
+    """
+
+    body_v1 = f"""
     <html lang="es">
       <head>
         <meta charset="utf-8" />
