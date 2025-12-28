@@ -6,6 +6,7 @@ services:
     environment:
       - DJANGO_DEBUG=true
       - DJANGO_SECRET_KEY=dev-secret
+      - DJANGO_TIME_ZONE=${DJANGO_TIME_ZONE:-America/Lima}
       - POSTGRES_DB=awaresim
       - POSTGRES_USER=awaresim
       - POSTGRES_PASSWORD=awaresim
@@ -13,6 +14,16 @@ services:
       - POSTGRES_PORT=5432
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - SITE_BASE_URL=${SITE_BASE_URL:-http://localhost:8000}
+      - EMAIL_BACKEND=${EMAIL_BACKEND:-django.core.mail.backends.smtp.EmailBackend}
+      - EMAIL_HOST=${EMAIL_HOST:-smtp.gmail.com}
+      - EMAIL_PORT=${EMAIL_PORT:-587}
+      - EMAIL_USE_TLS=${EMAIL_USE_TLS:-true}
+      - EMAIL_HOST_USER=${EMAIL_HOST_USER:-}
+      - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD:-}
+      - DEFAULT_FROM_EMAIL=${DEFAULT_FROM_EMAIL:-no-reply@example.com}
+      - IP_HASH_SALT=${IP_HASH_SALT:-}
+      - TZ=${TZ:-America/Lima}
     volumes:
       - .:/app
     depends_on:
@@ -25,6 +36,7 @@ services:
     environment:
       - DJANGO_DEBUG=true
       - DJANGO_SECRET_KEY=dev-secret
+      - DJANGO_TIME_ZONE=${DJANGO_TIME_ZONE:-America/Lima}
       - POSTGRES_DB=awaresim
       - POSTGRES_USER=awaresim
       - POSTGRES_PASSWORD=awaresim
@@ -32,6 +44,46 @@ services:
       - POSTGRES_PORT=5432
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - SITE_BASE_URL=${SITE_BASE_URL:-http://localhost:8000}
+      - EMAIL_BACKEND=${EMAIL_BACKEND:-django.core.mail.backends.smtp.EmailBackend}
+      - EMAIL_HOST=${EMAIL_HOST:-smtp.gmail.com}
+      - EMAIL_PORT=${EMAIL_PORT:-587}
+      - EMAIL_USE_TLS=${EMAIL_USE_TLS:-true}
+      - EMAIL_HOST_USER=${EMAIL_HOST_USER:-}
+      - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD:-}
+      - DEFAULT_FROM_EMAIL=${DEFAULT_FROM_EMAIL:-no-reply@example.com}
+      - IP_HASH_SALT=${IP_HASH_SALT:-}
+      - TZ=${TZ:-America/Lima}
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+      - redis
+
+  beat:
+    build: .
+    command: celery -A awaresim beat -l info
+    environment:
+      - DJANGO_DEBUG=true
+      - DJANGO_SECRET_KEY=dev-secret
+      - DJANGO_TIME_ZONE=${DJANGO_TIME_ZONE:-America/Lima}
+      - POSTGRES_DB=awaresim
+      - POSTGRES_USER=awaresim
+      - POSTGRES_PASSWORD=awaresim
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - SITE_BASE_URL=${SITE_BASE_URL:-http://localhost:8000}
+      - EMAIL_BACKEND=${EMAIL_BACKEND:-django.core.mail.backends.smtp.EmailBackend}
+      - EMAIL_HOST=${EMAIL_HOST:-smtp.gmail.com}
+      - EMAIL_PORT=${EMAIL_PORT:-587}
+      - EMAIL_USE_TLS=${EMAIL_USE_TLS:-true}
+      - EMAIL_HOST_USER=${EMAIL_HOST_USER:-}
+      - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD:-}
+      - DEFAULT_FROM_EMAIL=${DEFAULT_FROM_EMAIL:-no-reply@example.com}
+      - IP_HASH_SALT=${IP_HASH_SALT:-}
+      - TZ=${TZ:-America/Lima}
     volumes:
       - .:/app
     depends_on:
