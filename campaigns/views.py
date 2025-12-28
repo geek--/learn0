@@ -208,6 +208,9 @@ def landing(request, landing_slug):
       </body>
     </html>
     """
+    body_v1 = body
+    body_v2 = body
+    body_v3 = body
     return HttpResponse(body, content_type="text/html")
 
 
