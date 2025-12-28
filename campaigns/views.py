@@ -714,6 +714,24 @@ def dashboard(request):
             color: #05101c;
             border-color: #28d3ff;
           }}
+          .version-tabs {{
+            padding: 12px 48px 0;
+            display: flex;
+            gap: 12px;
+            font-size: 12px;
+          }}
+          .version-tabs a {{
+            text-decoration: none;
+            color: #9cb4d3;
+            border: 1px solid #22384d;
+            padding: 6px 10px;
+            border-radius: 999px;
+          }}
+          .version-tabs a.active {{
+            background: #28d3ff;
+            color: #05101c;
+            border-color: #28d3ff;
+          }}
         </style>
       </head>
       <body>
