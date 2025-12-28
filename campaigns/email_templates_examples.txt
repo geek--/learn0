@@ -14,6 +14,7 @@ Placeholders disponibles
 - {{ tracking_pixel }}  (se inserta automáticamente si no lo incluyes)
 
 Nota: Estas plantillas aceptan HTML básico.
+Recomendación: incluye también la URL en texto (por si el cliente muestra text/plain).
 
 
 1) Aviso de seguridad (HTML simple)
@@ -24,9 +25,13 @@ Estamos realizando una prueba de concientización sobre seguridad.
 <br>
 Por favor revisa la siguiente guía y confirma tu lectura:
 <br>
-<a href="{{ cta_url }}">Confirmar lectura</a>
+<a href="{{ cta_url }}">Confirmar lectura</a> <span style="font-size:12px;color:#666;">({{ cta_url }})</span>
 <br><br>
-Si tienes dudas, visita: <a href="{{ landing_url }}">Centro de seguridad</a>
+Si tienes dudas, visita:
+<a href="{{ landing_url }}">Centro de seguridad</a> <span style="font-size:12px;color:#666;">({{ landing_url }})</span>
+<br><br>
+Si crees que este correo es sospechoso, repórtalo aquí:
+<a href="{{ report_url }}?channel=link">Reportar</a> <span style="font-size:12px;color:#666;">({{ report_url }}?channel=link)</span>
 <br><br>
 Gracias,
 <br>
@@ -37,28 +42,35 @@ Equipo de Seguridad
 -------------------------------
 Hola {{ recipient_name }},
 <br><br>
-Se actualizó la política de contraseñas. Debes revisar los cambios aquí:
+Se actualizó la política de seguridad. Debes revisar los cambios aquí:
 <br>
-<a href="{{ click_url }}">Ver cambios de la política</a>
+<a href="{{ click_url }}">Ver cambios</a> <span style="font-size:12px;color:#666;">({{ click_url }})</span>
 <br><br>
-Tu correo registrado es: {{ recipient_email }}
-<br>
-Campaña: {{ campaign_name }}
+Centro de seguridad:
+<a href="{{ landing_url }}">Abrir</a> <span style="font-size:12px;color:#666;">({{ landing_url }})</span>
+<br><br>
+Reportar sospecha:
+<a href="{{ report_url }}?channel=link">Reportar</a> <span style="font-size:12px;color:#666;">({{ report_url }}?channel=link)</span>
 <br><br>
 Gracias.
 
 
-3) Recordatorio de capacitación
--------------------------------
+3) Recordatorio de lectura (sin presión)
+----------------------------------------
 Hola {{ recipient_name }},
 <br><br>
-Tienes una capacitación pendiente asignada.
+Tienes una lectura pendiente asignada para esta semana.
 <br>
-Accede al material en el siguiente enlace:
+Accede al material aquí:
 <br>
-<a href="{{ click_url }}">Acceder a capacitación</a>
+<a href="{{ cta_url }}">Abrir material</a> <span style="font-size:12px;color:#666;">({{ cta_url }})</span>
 <br><br>
 Si el enlace no funciona, entra al portal:
+<br>
 {{ landing_url }}
 <br><br>
-Equipo de Compliance
+Si crees que este mensaje es sospechoso, repórtalo aquí:
+<br>
+<a href="{{ report_url }}?channel=link">Reportar</a> <span style="font-size:12px;color:#666;">({{ report_url }}?channel=link)</span>
+<br><br>
+Equipo de Seguridad

@@ -107,13 +107,15 @@ EMAIL_BACKEND = os.environ.get("EMAIL_BACKEND", "django.core.mail.backends.smtp.
 EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.gmail.com")
 EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
 EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "true").lower() == "true"
-EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "@gmail.com")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER or "no-reply@example.com")
 
 CELERY_BEAT_SCHEDULE = {
     "process-campaigns-hourly": {
         "task": "campaigns.tasks.process_campaigns",
-        "schedule": 3600.0,
+        "schedule": 120.0,
     }
 }
+CELERY_ENABLE_UTC = True
+CELERY_TIMEZONE = "America/Lima"
