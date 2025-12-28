@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from django.conf import settings
@@ -35,8 +36,8 @@ def render_email_template(template: str, context: dict[str, Any]) -> str:
     if "{{ tracking_pixel }}" not in rendered:
         rendered = f"{rendered}<br>{context.get('tracking_pixel', '')}"
     for key, value in context.items():
-        rendered = rendered.replace(f"{{{{ {key} }}}}", str(value))
-        rendered = rendered.replace(f"{{{{{key}}}}}", str(value))
+        pattern = re.compile(r"{{\s*" + re.escape(key) + r"\s*}}")
+        rendered = pattern.sub(str(value), rendered)
     return rendered
 
 
