@@ -401,9 +401,28 @@ def dashboard(request):
         ],
         "rates": [open_rate, landing_rate, cta_rate, report_rate],
     }
-    metric_tiles = []
     def _format_datetime(value):
         return value.strftime("%d/%m/%Y, %H:%M") if value else "--"
+
+    campaign_stats = (
+        recipients.values("campaign_id", "campaign__name")
+        .annotate(
+            count=models.Count("id"),
+            sent=models.Count(
+                "id",
+                filter=models.Q(sent_at__isnull=False) | models.Q(status=CampaignRecipient.Status.SENT),
+            ),
+            opened=models.Count(
+                "id",
+                filter=models.Q(opened_at__isnull=False) | models.Q(open_seen_at__isnull=False),
+            ),
+            landing=models.Count("id", filter=models.Q(landing_view_count__gt=0)),
+            cta=models.Count("id", filter=models.Q(cta_click_count__gt=0)),
+            reported=models.Count("id", filter=models.Q(reported_at__isnull=False)),
+            bounced=models.Count("id", filter=models.Q(status=CampaignRecipient.Status.BOUNCED)),
+        )
+        .order_by("-count", "campaign__name")
+    )
 
     body_v3 = f"""
     <html lang="es">
@@ -445,6 +464,8 @@ def dashboard(request):
             text-align: center;
             font-weight: 600;
             color: #4b5563;
+            text-decoration: none;
+            display: block;
           }}
           .top-tab span {{
             display: block;
@@ -537,6 +558,17 @@ def dashboard(request):
             color: #6b7280;
             font-size: 12px;
           }}
+          .campaign-table {{
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+          }}
+          .campaign-table th,
+          .campaign-table td {{
+            text-align: left;
+            padding: 10px 8px;
+            border-bottom: 1px solid #e5e7eb;
+          }}
         </style>
       </head>
       <body>
@@ -544,13 +576,13 @@ def dashboard(request):
           <h1 class="headline">Cyber Phishing Dashboard</h1>
           <p class="subhead">Resumen de campañas, riesgos y curvas de mejora con el estilo de referencia.</p>
           <div class="top-tabs">
-            <div class="top-tab">Campaigns<span>{len(campaigns)}</span></div>
-            <div class="top-tab">Recipients<span>{totals["count"]}</span></div>
-            <div class="top-tab">Delivered<span>{totals["sent"]}</span></div>
-            <div class="top-tab">Opened<span>{totals["opened"]}</span></div>
-            <div class="top-tab">Clicked<span>{totals["cta"]}</span></div>
-            <div class="top-tab">Reported<span>{totals["reported"]}</span></div>
-            <div class="top-tab">Bounced<span>{totals["bounced"]}</span></div>
+            <a class="top-tab" href="#campaigns">Campaigns<span>{len(campaigns)}</span></a>
+            <a class="top-tab" href="#campaigns">Recipients<span>{totals["count"]}</span></a>
+            <a class="top-tab" href="#campaigns">Delivered<span>{totals["sent"]}</span></a>
+            <a class="top-tab" href="#campaigns">Opened<span>{totals["opened"]}</span></a>
+            <a class="top-tab" href="#campaigns">Clicked<span>{totals["cta"]}</span></a>
+            <a class="top-tab" href="#campaigns">Reported<span>{totals["reported"]}</span></a>
+            <a class="top-tab" href="#campaigns">Bounced<span>{totals["bounced"]}</span></a>
           </div>
           <div class="top-metrics">
             <div class="top-metric">{totals["sent"]}</div>
@@ -563,7 +595,7 @@ def dashboard(request):
           </div>
           <div class="grid">
             <div class="card" style="grid-column: span 6;">
-              <h3>Organisation Health Risk</h3>
+              <h3>Organisation Health Risk (Phishing Open Rate)</h3>
               <canvas class="ring" id="riskChart"></canvas>
               <div class="ring-label">Phishing Campaigns · {open_rate}%</div>
             </div>
@@ -581,11 +613,6 @@ def dashboard(request):
               </div>
               <div class="bar-row">
                 <span>Vishing</span>
-                <div class="bar"><span style="width: 0%;"></span></div>
-                <strong>0%</strong>
-              </div>
-              <div class="bar-row">
-                <span>Ransomware</span>
                 <div class="bar"><span style="width: 0%;"></span></div>
                 <strong>0%</strong>
               </div>
@@ -614,6 +641,40 @@ def dashboard(request):
                     for item in recipients[:6]
                 ])}
               </div>
+            </div>
+            <div class="card" id="campaigns" style="grid-column: span 12;">
+              <h3>Detalle por Campaña</h3>
+              <table class="campaign-table">
+                <thead>
+                  <tr>
+                    <th>Campaña</th>
+                    <th>Recipients</th>
+                    <th>Delivered</th>
+                    <th>Opened</th>
+                    <th>Landing</th>
+                    <th>Clicked</th>
+                    <th>Reported</th>
+                    <th>Bounced</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {"".join([
+                      f'''
+                      <tr>
+                        <td>{escape(stat["campaign__name"])}</td>
+                        <td>{stat["count"]}</td>
+                        <td>{stat["sent"]}</td>
+                        <td>{stat["opened"]}</td>
+                        <td>{stat["landing"]}</td>
+                        <td>{stat["cta"]}</td>
+                        <td>{stat["reported"]}</td>
+                        <td>{stat["bounced"]}</td>
+                      </tr>
+                      '''
+                      for stat in campaign_stats
+                  ]) if campaign_stats else '<tr><td colspan="8" class="muted">Sin campañas para mostrar.</td></tr>'}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
