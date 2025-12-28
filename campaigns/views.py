@@ -208,6 +208,8 @@ def landing(request, landing_slug):
       </body>
     </html>
     """
+    if not body.strip():
+        body = "<html><body><p>Dashboard v3</p></body></html>"
     body_v1 = body
     body_v2 = body
     body_v3 = body
