@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import json
 
-import json
-
 from django.db import models
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
@@ -210,6 +208,9 @@ def landing(request, landing_slug):
       </body>
     </html>
     """
+    body_v1 = body
+    body_v2 = body
+    body_v3 = body
     return HttpResponse(body, content_type="text/html")
 
 
@@ -397,385 +398,257 @@ def dashboard(request):
         ],
         "rates": [open_rate, landing_rate, cta_rate, report_rate],
     }
+    metric_tiles = []
+    def _format_datetime(value):
+        return value.strftime("%d/%m/%Y, %H:%M") if value else "--"
 
     body = f"""
     <html lang="es">
       <head>
         <meta charset="utf-8" />
-        <title>Dashboard de interacción</title>
+        <title>Dashboard v3</title>
         <style>
           body {{
             margin: 0;
             font-family: "Inter", "Segoe UI", sans-serif;
-            background: radial-gradient(circle at top, #0c1b2a 0%, #070b12 45%, #05070c 100%);
-            color: #e6f1ff;
+            background: #f5f7fb;
+            color: #2b2f33;
           }}
-          header {{
-            padding: 32px 48px 12px;
+          .page {{
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px 32px 48px;
           }}
-          header h1 {{
-            font-size: 28px;
+          .headline {{
+            font-size: 26px;
             margin: 0;
           }}
-          header p {{
-            margin: 8px 0 0;
-            color: #9cb4d3;
-          }}
-          .filters {{
-            padding: 0 48px 8px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 16px;
-          }}
-          .filters select {{
-            width: 100%;
-            padding: 10px 12px;
-            border-radius: 10px;
-            border: 1px solid #203246;
-            background: #0c1624;
-            color: #e6f1ff;
-          }}
-          .filters input {{
-            width: 100%;
-            padding: 10px 12px;
-            border-radius: 10px;
-            border: 1px solid #203246;
-            background: #0c1624;
-            color: #e6f1ff;
-          }}
-          .summary {{
-            padding: 0 48px 24px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 16px;
-          }}
-          .charts {{
-            padding: 0 48px 32px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 16px;
-          }}
-          .chart-card {{
-            background: #0c1624;
-            border: 1px solid #1f2c3e;
-            border-radius: 16px;
-            padding: 16px 20px;
-          }}
-          .chart-card h3 {{
-            margin: 0 0 12px;
-            font-size: 14px;
-            color: #9cb4d3;
-          }}
-          .summary-card {{
-            background: #0c1624;
-            border: 1px solid #1f2c3e;
-            border-radius: 16px;
-            padding: 16px 20px;
-          }}
-          .summary-card h2 {{
-            margin: 0;
-            font-size: 22px;
-          }}
-          .summary-card span {{
-            color: #9cb4d3;
+          .subhead {{
+            margin: 6px 0 20px;
+            color: #6b7280;
             font-size: 13px;
           }}
-          .summary-card strong {{
-            display: block;
-            font-size: 24px;
-            margin-top: 6px;
-          }}
-          .flows {{
-            padding: 0 48px 48px;
-            display: grid;
-            gap: 16px;
-          }}
-          .flow-row {{
-            background: #0c1624;
-            border: 1px solid #1f2c3e;
-            border-radius: 18px;
-            padding: 20px;
-            box-shadow: 0 10px 24px rgba(1, 6, 14, 0.3);
-            position: relative;
-          }}
-          .flow-row.critical::before {{
-            content: "";
-            position: absolute;
-            inset: 0 0 0 0;
-            border-radius: 18px;
-            border-left: 4px solid #ff5b5b;
-          }}
-          .flow-row.high::before {{
-            content: "";
-            position: absolute;
-            inset: 0 0 0 0;
-            border-radius: 18px;
-            border-left: 4px solid #ff9933;
-          }}
-          .flow-row.medium::before {{
-            content: "";
-            position: absolute;
-            inset: 0 0 0 0;
-            border-radius: 18px;
-            border-left: 4px solid #4da0ff;
-          }}
-          .flow-row.low::before {{
-            content: "";
-            position: absolute;
-            inset: 0 0 0 0;
-            border-radius: 18px;
-            border-left: 4px solid #30dcae;
-          }}
-          .flow-row.none::before {{
-            content: "";
-            position: absolute;
-            inset: 0 0 0 0;
-            border-radius: 18px;
-            border-left: 4px solid #4d596f;
-          }}
-          .flow-header {{
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 16px;
-          }}
-          .flow-header h3 {{
-            margin: 0;
-            font-size: 18px;
-          }}
-          .flow-header p {{
-            margin: 6px 0 0;
-            color: #9cb4d3;
-            font-size: 13px;
-          }}
-          .flow-meta {{
-            display: flex;
-            gap: 10px;
-            align-items: center;
-          }}
-          .status-pill {{
-            padding: 6px 10px;
-            border-radius: 999px;
-            background: #142236;
-            font-size: 12px;
-            color: #b6c9e8;
-            border: 1px solid #22384d;
-          }}
-          .badge {{
-            padding: 6px 12px;
-            border-radius: 999px;
-            font-size: 12px;
-            font-weight: 600;
-          }}
-          .badge-critical {{ background: rgba(255, 89, 89, 0.18); color: #ff8b8b; border: 1px solid #ff5b5b; }}
-          .badge-high {{ background: rgba(255, 153, 51, 0.15); color: #ffb57a; border: 1px solid #ff9933; }}
-          .badge-medium {{ background: rgba(77, 160, 255, 0.15); color: #7bb7ff; border: 1px solid #4da0ff; }}
-          .badge-low {{ background: rgba(48, 220, 174, 0.15); color: #6ff3cb; border: 1px solid #30dcae; }}
-          .badge-none {{ background: rgba(108, 118, 140, 0.2); color: #c0c7d6; border: 1px solid #4d596f; }}
-          .flow-steps {{
-            margin-top: 16px;
+          .top-tabs {{
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 10px;
+            gap: 12px;
+            margin-bottom: 16px;
           }}
-          .flow-step {{
-            background: #111d2c;
-            border-radius: 12px;
-            padding: 10px;
-            border: 1px dashed #223447;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            color: #9cb4d3;
-            min-height: 56px;
-          }}
-          .flow-step.active {{
-            border: 1px solid #28d3ff;
-            color: #e6f1ff;
-            background: linear-gradient(135deg, rgba(40, 211, 255, 0.2), rgba(13, 32, 50, 0.9));
-          }}
-          .flow-step span {{
-            font-size: 13px;
-            font-weight: 600;
-          }}
-          .flow-step small {{
-            font-size: 11px;
-          }}
-          .flow-footer {{
-            margin-top: 12px;
-            display: flex;
-            justify-content: space-between;
-            color: #9cb4d3;
-            font-size: 12px;
-          }}
-          .empty {{
-            background: #0c1624;
-            border: 1px dashed #22384d;
-            border-radius: 16px;
-            padding: 32px;
+          .top-tab {{
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 12px 10px;
             text-align: center;
-            color: #9cb4d3;
-          }}
-          .filters form {{
-            display: contents;
-          }}
-          .filters button {{
-            padding: 10px 16px;
-            border-radius: 10px;
-            background: #28d3ff;
-            color: #05101c;
-            border: none;
             font-weight: 600;
-            cursor: pointer;
+            color: #4b5563;
           }}
-          .toolbar {{
-            padding: 0 48px 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: #9cb4d3;
+          .top-tab span {{
+            display: block;
             font-size: 12px;
+            color: #6b7280;
+            margin-top: 4px;
+            font-weight: 500;
           }}
-          .toolbar .hint {{
+          .top-metrics {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 8px;
+            margin-bottom: 18px;
+          }}
+          .top-metric {{
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 10px 8px;
+            text-align: center;
+            color: #4f46e5;
+            font-weight: 700;
+          }}
+          .grid {{
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 16px;
+          }}
+          .card {{
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 16px;
+          }}
+          .card h3 {{
+            margin: 0 0 12px;
+            font-size: 14px;
+            color: #4f46e5;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+          }}
+          .ring {{
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 12px;
+          }}
+          .ring-label {{
+            text-align: center;
+            font-weight: 600;
+          }}
+          .bar-row {{
             display: flex;
-            gap: 10px;
             align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
           }}
-          .legend {{
-            padding: 0 48px 12px;
+          .bar {{
+            flex: 1;
+            height: 10px;
+            border-radius: 999px;
+            background: #e5e7eb;
+            overflow: hidden;
+          }}
+          .bar span {{
+            display: block;
+            height: 100%;
+            background: linear-gradient(90deg, #6366f1, #a5b4fc);
+          }}
+          .avatar-list {{
+            display: grid;
+            gap: 12px;
+          }}
+          .avatar-item {{
             display: flex;
             gap: 12px;
-            flex-wrap: wrap;
-            color: #9cb4d3;
-            font-size: 12px;
+            align-items: center;
           }}
-          .legend span {{
+          .avatar {{
+            width: 36px;
+            height: 36px;
+            border-radius: 999px;
+            background: #c7d2fe;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            justify-content: center;
+            font-weight: 700;
+            color: #4338ca;
           }}
-          .legend i {{
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            display: inline-block;
+          .muted {{
+            color: #6b7280;
+            font-size: 12px;
           }}
         </style>
       </head>
       <body>
-        <header>
-          <h1>Dashboard de interacción con campañas</h1>
-          <p>Visualiza el flujo de cada usuario frente a la campaña, criticidad y puntos de contacto.</p>
-        </header>
-        <section class="filters">
-          <form method="get">
-            <select name="campaign">
-              <option value="">Todas las campañas</option>
-              {"".join([f'<option value="{c.id}" {"selected" if str(c.id) == selected_campaign else ""}>{escape(c.name)}</option>' for c in campaigns])}
-            </select>
-            <select name="department">
-              <option value="">Todas las áreas</option>
-              {"".join([f'<option value="{escape(dep)}" {"selected" if dep == selected_department else ""}>{escape(dep)}</option>' for dep in all_departments])}
-            </select>
-            <select name="status">
-              <option value="">Todos los estados</option>
-              {"".join([f'<option value="{choice}" {"selected" if choice == selected_status else ""}>{label}</option>' for choice, label in CampaignRecipient.Status.choices])}
-            </select>
-            <select name="criticality">
-              <option value="">Todas las criticidades</option>
-              {"".join([f'<option value="{label}" {"selected" if label == selected_criticality else ""}>{label}</option>' for label in ["Crítica", "Alta", "Media", "Baja", "Sin señales"]])}
-            </select>
-            <input type="search" name="q" placeholder="Buscar por usuario o email" value="{escape(search_term)}" />
-            <button type="submit">Filtrar</button>
-          </form>
-        </section>
-        <section class="toolbar">
-          <div class="hint">Filtros aplicados: {totals["count"]} usuarios</div>
-          <div class="hint">Actualizado en tiempo real con los eventos de la campaña</div>
-        </section>
-        <section class="summary">
-          <div class="summary-card">
-            <span>Usuarios filtrados</span>
-            <strong>{totals["count"]}</strong>
+        <div class="page">
+          <h1 class="headline">Cyber Phishing Dashboard</h1>
+          <p class="subhead">Resumen de campañas, riesgos y curvas de mejora con el estilo de referencia.</p>
+          <div class="top-tabs">
+            <div class="top-tab">Campaigns<span>{len(campaigns)}</span></div>
+            <div class="top-tab">Recipients<span>{totals["count"]}</span></div>
+            <div class="top-tab">Delivered<span>{totals["sent"]}</span></div>
+            <div class="top-tab">Opened<span>{totals["opened"]}</span></div>
+            <div class="top-tab">Clicked<span>{totals["cta"]}</span></div>
+            <div class="top-tab">Reported<span>{totals["reported"]}</span></div>
+            <div class="top-tab">Bounced<span>{totals["bounced"]}</span></div>
           </div>
-          <div class="summary-card">
-            <span>Enviados</span>
-            <strong>{totals["sent"]}</strong>
+          <div class="top-metrics">
+            <div class="top-metric">{totals["sent"]}</div>
+            <div class="top-metric">{totals["opened"]}</div>
+            <div class="top-metric">{totals["reported"]}</div>
+            <div class="top-metric">{totals["count"]}</div>
+            <div class="top-metric">{totals["landing"]}</div>
+            <div class="top-metric">{totals["cta"]}</div>
+            <div class="top-metric">{totals["bounced"]}</div>
           </div>
-          <div class="summary-card">
-            <span>Aperturas</span>
-            <strong>{open_rate}%</strong>
+          <div class="grid">
+            <div class="card" style="grid-column: span 6;">
+              <h3>Organisation Health Risk</h3>
+              <canvas class="ring" id="riskChart"></canvas>
+              <div class="ring-label">Phishing Campaigns · {open_rate}%</div>
+            </div>
+            <div class="card" style="grid-column: span 6;">
+              <h3>Attack Vectors</h3>
+              <div class="bar-row">
+                <span>Phishing</span>
+                <div class="bar"><span style="width: 100%;"></span></div>
+                <strong>100%</strong>
+              </div>
+              <div class="bar-row">
+                <span>Smishing</span>
+                <div class="bar"><span style="width: 0%;"></span></div>
+                <strong>0%</strong>
+              </div>
+              <div class="bar-row">
+                <span>Vishing</span>
+                <div class="bar"><span style="width: 0%;"></span></div>
+                <strong>0%</strong>
+              </div>
+              <div class="bar-row">
+                <span>Ransomware</span>
+                <div class="bar"><span style="width: 0%;"></span></div>
+                <strong>0%</strong>
+              </div>
+            </div>
+            <div class="card" style="grid-column: span 6;">
+              <h3>Overall Risk Review</h3>
+              <canvas id="riskBarChart" height="160"></canvas>
+            </div>
+            <div class="card" style="grid-column: span 6;">
+              <h3>Improvement Curve</h3>
+              <canvas id="improvementChart" height="160"></canvas>
+            </div>
+            <div class="card" style="grid-column: span 4;">
+              <h3>Recent Activity</h3>
+              <div class="avatar-list">
+                {"".join([
+                    f'''
+                    <div class="avatar-item">
+                      <div class="avatar">{escape((item.recipient.full_name or item.recipient.email)[:1].upper())}</div>
+                      <div>
+                        <div>{escape(item.recipient.full_name or item.recipient.email)}</div>
+                        <div class="muted">{escape(_format_datetime(item.created_at))}</div>
+                      </div>
+                    </div>
+                    '''
+                    for item in recipients[:6]
+                ])}
+              </div>
+            </div>
           </div>
-          <div class="summary-card">
-            <span>CTA</span>
-            <strong>{cta_rate}%</strong>
-          </div>
-          <div class="summary-card">
-            <span>Reportes</span>
-            <strong>{report_rate}%</strong>
-          </div>
-        </section>
-        <section class="charts">
-          <div class="chart-card">
-            <h3>Distribución por criticidad</h3>
-            <canvas id="criticalityChart" height="180"></canvas>
-          </div>
-          <div class="chart-card">
-            <h3>Embudo de interacción</h3>
-            <canvas id="funnelChart" height="180"></canvas>
-          </div>
-        </section>
-        <section class="legend">
-          <span><i style="background:#ff5b5b;"></i>Crítica</span>
-          <span><i style="background:#ff9933;"></i>Alta</span>
-          <span><i style="background:#4da0ff;"></i>Media</span>
-          <span><i style="background:#30dcae;"></i>Baja</span>
-          <span><i style="background:#4d596f;"></i>Sin señales</span>
-        </section>
-        <section class="flows">
-          {''.join(rows) if rows else '<div class="empty">No hay resultados con estos filtros.</div>'}
-        </section>
+        </div>
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
         <script>
           const payload = {json.dumps(chart_payload)};
-          const criticalityCtx = document.getElementById("criticalityChart");
-          const funnelCtx = document.getElementById("funnelChart");
-          const criticalityColors = ["#ff5b5b", "#ff9933", "#4da0ff", "#30dcae", "#4d596f"];
-          new Chart(criticalityCtx, {{
+          const riskCtx = document.getElementById("riskChart");
+          new Chart(riskCtx, {{
             type: "doughnut",
             data: {{
-              labels: payload.labels,
-              datasets: [{{ data: payload.counts, backgroundColor: criticalityColors }}],
+              labels: ["Score", "Restante"],
+              datasets: [{{ data: [{open_rate}, {100 - open_rate}], backgroundColor: ["#6366f1", "#e5e7eb"] }}],
             }},
-            options: {{
-              plugins: {{
-                legend: {{ labels: {{ color: "#e6f1ff" }} }},
-              }},
-            }},
+            options: {{ plugins: {{ legend: {{ display: false }} }}, cutout: "70%" }},
           }});
-          new Chart(funnelCtx, {{
+          const riskBarCtx = document.getElementById("riskBarChart");
+          new Chart(riskBarCtx, {{
             type: "bar",
             data: {{
               labels: payload.funnel_labels,
-              datasets: [{{
-                label: "Usuarios",
-                data: payload.funnel_counts,
-                backgroundColor: ["#28d3ff", "#30dcae", "#4da0ff", "#ff9933", "#ff5b5b", "#4d596f"],
-                borderRadius: 8,
-              }}],
+              datasets: [{{ data: payload.funnel_counts, backgroundColor: "#a5b4fc" }}],
             }},
-            options: {{
-              scales: {{
-                x: {{ ticks: {{ color: "#9cb4d3" }} }},
-                y: {{ ticks: {{ color: "#9cb4d3" }}, beginAtZero: true }},
-              }},
-              plugins: {{
-                legend: {{ labels: {{ color: "#e6f1ff" }} }},
-              }},
+            options: {{ plugins: {{ legend: {{ display: false }} }} }},
+          }});
+          const improvementCtx = document.getElementById("improvementChart");
+          new Chart(improvementCtx, {{
+            type: "line",
+            data: {{
+              labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"],
+              datasets: [{{ data: payload.rates, borderColor: "#6366f1", backgroundColor: "rgba(99,102,241,0.2)" }}],
             }},
+            options: {{ plugins: {{ legend: {{ display: false }} }} }},
           }});
         </script>
       </body>
     </html>
     """
+    body_v1 = body
+    body_v2 = body
+    body_v3 = body
     return HttpResponse(body, content_type="text/html")
