@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import json
 
+import json
+
+from django.db import models
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
@@ -233,7 +236,7 @@ def _criticality_label(recipient: CampaignRecipient) -> str:
         return "Crítica"
     if recipient.submit_attempted:
         return "Alta"
-    if recipient.cta_click_count or recipient.click_count:
+    if recipient.cta_click_count or recipient.landing_view_count:
         return "Media"
     if recipient.opened_at or recipient.open_seen_at:
         return "Baja"
@@ -254,7 +257,6 @@ def _build_flow_steps(recipient: CampaignRecipient) -> list[tuple[str, bool, obj
     return [
         ("Enviado", recipient.sent_at is not None, recipient.sent_at),
         ("Abrió", recipient.opened_at is not None or recipient.open_seen_at is not None, recipient.opened_at),
-        ("Clic", recipient.click_count > 0, recipient.clicked_at),
         ("Landing", recipient.landing_view_count > 0, recipient.landing_viewed_at),
         ("CTA", recipient.cta_click_count > 0, recipient.cta_clicked_at),
         ("Intento", recipient.submit_attempted, recipient.submit_attempt_at),
@@ -269,6 +271,7 @@ def dashboard(request):
     selected_department = request.GET.get("department", "")
     selected_status = request.GET.get("status", "")
     selected_criticality = request.GET.get("criticality", "")
+    search_term = request.GET.get("q", "").strip()
 
     recipients = CampaignRecipient.objects.select_related("campaign", "recipient").order_by("-created_at")
     if selected_campaign:
@@ -277,6 +280,11 @@ def dashboard(request):
         recipients = recipients.filter(recipient__department=selected_department)
     if selected_status:
         recipients = recipients.filter(status=selected_status)
+    if search_term:
+        recipients = recipients.filter(
+            models.Q(recipient__email__icontains=search_term)
+            | models.Q(recipient__full_name__icontains=search_term)
+        )
 
     all_departments = (
         CampaignRecipient.objects.select_related("recipient")
@@ -287,7 +295,15 @@ def dashboard(request):
     )
 
     rows = []
-    totals = {"count": 0, "opened": 0, "clicked": 0, "reported": 0}
+    totals = {
+        "count": 0,
+        "sent": 0,
+        "opened": 0,
+        "landing": 0,
+        "cta": 0,
+        "reported": 0,
+        "bounced": 0,
+    }
     criticality_counts = {
         "Crítica": 0,
         "Alta": 0,
@@ -301,12 +317,18 @@ def dashboard(request):
             continue
         totals["count"] += 1
         criticality_counts[criticality] += 1
+        if item.sent_at or item.status == CampaignRecipient.Status.SENT:
+            totals["sent"] += 1
         if item.opened_at or item.open_seen_at:
             totals["opened"] += 1
-        if item.click_count:
-            totals["clicked"] += 1
+        if item.landing_view_count:
+            totals["landing"] += 1
+        if item.cta_click_count:
+            totals["cta"] += 1
         if item.reported_at:
             totals["reported"] += 1
+        if item.status == CampaignRecipient.Status.BOUNCED:
+            totals["bounced"] += 1
         flow = []
         for step, is_active, timestamp in _build_flow_steps(item):
             time_label = timestamp.strftime("%d/%m %H:%M") if timestamp else "--"
@@ -343,7 +365,7 @@ def dashboard(request):
               </div>
               <div class="flow-footer">
                 <div>Campaña: <strong>{escape(item.campaign.name)}</strong></div>
-                <div>Clicks: {item.click_count} · CTA: {item.cta_click_count} · Landing: {item.landing_view_count}</div>
+                <div>Landing: {item.landing_view_count} · CTA: {item.cta_click_count} · Reportes: {1 if item.reported_at else 0}</div>
               </div>
             </div>
             """
@@ -351,12 +373,29 @@ def dashboard(request):
 
     total_count = totals["count"] or 1
     open_rate = int((totals["opened"] / total_count) * 100)
-    click_rate = int((totals["clicked"] / total_count) * 100)
+    landing_rate = int((totals["landing"] / total_count) * 100)
+    cta_rate = int((totals["cta"] / total_count) * 100)
     report_rate = int((totals["reported"] / total_count) * 100)
     chart_payload = {
         "labels": list(criticality_counts.keys()),
         "counts": list(criticality_counts.values()),
-        "rates": [open_rate, click_rate, report_rate],
+        "funnel_labels": [
+            "Enviados",
+            "Abiertos",
+            "Landing",
+            "CTA",
+            "Reportados",
+            "Rebotados",
+        ],
+        "funnel_counts": [
+            totals["sent"],
+            totals["opened"],
+            totals["landing"],
+            totals["cta"],
+            totals["reported"],
+            totals["bounced"],
+        ],
+        "rates": [open_rate, landing_rate, cta_rate, report_rate],
     }
 
     body = f"""
@@ -383,9 +422,9 @@ def dashboard(request):
             color: #9cb4d3;
           }}
           .filters {{
-            padding: 0 48px 16px;
+            padding: 0 48px 8px;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 16px;
           }}
           .filters select {{
@@ -396,10 +435,18 @@ def dashboard(request):
             background: #0c1624;
             color: #e6f1ff;
           }}
+          .filters input {{
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid #203246;
+            background: #0c1624;
+            color: #e6f1ff;
+          }}
           .summary {{
             padding: 0 48px 24px;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
             gap: 16px;
           }}
           .charts {{
@@ -432,6 +479,11 @@ def dashboard(request):
           .summary-card span {{
             color: #9cb4d3;
             font-size: 13px;
+          }}
+          .summary-card strong {{
+            display: block;
+            font-size: 24px;
+            margin-top: 6px;
           }}
           .flows {{
             padding: 0 48px 48px;
@@ -576,6 +628,19 @@ def dashboard(request):
             font-weight: 600;
             cursor: pointer;
           }}
+          .toolbar {{
+            padding: 0 48px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #9cb4d3;
+            font-size: 12px;
+          }}
+          .toolbar .hint {{
+            display: flex;
+            gap: 10px;
+            align-items: center;
+          }}
           .legend {{
             padding: 0 48px 12px;
             display: flex;
@@ -620,25 +685,34 @@ def dashboard(request):
               <option value="">Todas las criticidades</option>
               {"".join([f'<option value="{label}" {"selected" if label == selected_criticality else ""}>{label}</option>' for label in ["Crítica", "Alta", "Media", "Baja", "Sin señales"]])}
             </select>
+            <input type="search" name="q" placeholder="Buscar por usuario o email" value="{escape(search_term)}" />
             <button type="submit">Filtrar</button>
           </form>
+        </section>
+        <section class="toolbar">
+          <div class="hint">Filtros aplicados: {totals["count"]} usuarios</div>
+          <div class="hint">Actualizado en tiempo real con los eventos de la campaña</div>
         </section>
         <section class="summary">
           <div class="summary-card">
             <span>Usuarios filtrados</span>
-            <h2>{totals["count"]}</h2>
+            <strong>{totals["count"]}</strong>
           </div>
           <div class="summary-card">
-            <span>Tasa de apertura</span>
-            <h2>{open_rate}%</h2>
+            <span>Enviados</span>
+            <strong>{totals["sent"]}</strong>
           </div>
           <div class="summary-card">
-            <span>Tasa de clics</span>
-            <h2>{click_rate}%</h2>
+            <span>Aperturas</span>
+            <strong>{open_rate}%</strong>
           </div>
           <div class="summary-card">
-            <span>Tasa de reporte</span>
-            <h2>{report_rate}%</h2>
+            <span>CTA</span>
+            <strong>{cta_rate}%</strong>
+          </div>
+          <div class="summary-card">
+            <span>Reportes</span>
+            <strong>{report_rate}%</strong>
           </div>
         </section>
         <section class="charts">
@@ -647,8 +721,8 @@ def dashboard(request):
             <canvas id="criticalityChart" height="180"></canvas>
           </div>
           <div class="chart-card">
-            <h3>Tasas de interacción</h3>
-            <canvas id="ratesChart" height="180"></canvas>
+            <h3>Embudo de interacción</h3>
+            <canvas id="funnelChart" height="180"></canvas>
           </div>
         </section>
         <section class="legend">
@@ -665,7 +739,7 @@ def dashboard(request):
         <script>
           const payload = {json.dumps(chart_payload)};
           const criticalityCtx = document.getElementById("criticalityChart");
-          const ratesCtx = document.getElementById("ratesChart");
+          const funnelCtx = document.getElementById("funnelChart");
           const criticalityColors = ["#ff5b5b", "#ff9933", "#4da0ff", "#30dcae", "#4d596f"];
           new Chart(criticalityCtx, {{
             type: "doughnut",
@@ -679,21 +753,21 @@ def dashboard(request):
               }},
             }},
           }});
-          new Chart(ratesCtx, {{
+          new Chart(funnelCtx, {{
             type: "bar",
             data: {{
-              labels: ["Apertura", "Clics", "Reportes"],
+              labels: payload.funnel_labels,
               datasets: [{{
-                label: "Tasa (%)",
-                data: payload.rates,
-                backgroundColor: ["#30dcae", "#4da0ff", "#ff5b5b"],
+                label: "Usuarios",
+                data: payload.funnel_counts,
+                backgroundColor: ["#28d3ff", "#30dcae", "#4da0ff", "#ff9933", "#ff5b5b", "#4d596f"],
                 borderRadius: 8,
               }}],
             }},
             options: {{
               scales: {{
                 x: {{ ticks: {{ color: "#9cb4d3" }} }},
-                y: {{ ticks: {{ color: "#9cb4d3" }}, beginAtZero: true, max: 100 }},
+                y: {{ ticks: {{ color: "#9cb4d3" }}, beginAtZero: true }},
               }},
               plugins: {{
                 legend: {{ labels: {{ color: "#e6f1ff" }} }},
