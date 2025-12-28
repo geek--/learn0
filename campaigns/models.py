@@ -74,6 +74,10 @@ class CampaignRecipient(models.Model):
     def __str__(self) -> str:
         return f"{self.campaign} -> {self.recipient}"
 
+    @property
+    def updated_at(self):
+        return self.created_at
+
     def clean(self) -> None:
         if self.status == self.Status.SENT and self.sent_at is None:
             raise ValidationError("sent_at is required when status is SENT.")
