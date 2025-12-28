@@ -36,6 +36,7 @@ def render_email_template(template: str, context: dict[str, Any]) -> str:
         rendered = f"{rendered}<br>{context.get('tracking_pixel', '')}"
     for key, value in context.items():
         rendered = rendered.replace(f"{{{{ {key} }}}}", str(value))
+        rendered = rendered.replace(f"{{{{{key}}}}}", str(value))
     return rendered
 
 
