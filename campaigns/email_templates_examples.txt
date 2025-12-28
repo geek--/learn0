@@ -14,6 +14,7 @@ Placeholders disponibles
 - {{ tracking_pixel }}  (se inserta automáticamente si no lo incluyes)
 
 Nota: Estas plantillas aceptan HTML básico.
+Nota sobre OPEN: la señal de apertura es débil porque clientes como Gmail/Apple pueden usar proxies que disparan el pixel sin interacción real.
 Recomendación: incluye también la URL en texto (por si el cliente muestra text/plain).
 
 

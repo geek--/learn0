@@ -4,6 +4,7 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
 from campaigns.models import CampaignRecipient, EmailEvent
@@ -132,6 +133,7 @@ def track_cta(request, token):
     return redirect(landing_path)
 
 
+@csrf_exempt
 @require_POST
 def track_submit_attempt(request, token):
     campaign_recipient = get_object_or_404(CampaignRecipient, tracking_token=token)
@@ -145,7 +147,17 @@ def track_submit_attempt(request, token):
     if campaign_recipient.submit_attempt_at is None:
         updates["submit_attempt_at"] = now
     CampaignRecipient.objects.filter(pk=campaign_recipient.pk).update(**updates)
-    return JsonResponse({"status": "ok"})
+    accept_header = request.headers.get("Accept", "")
+    if "application/json" in accept_header:
+        return JsonResponse({"status": "ok", "message": "Gracias"})
+    body = """
+    <html>
+      <body>
+        <p>Gracias por tu confirmación.</p>
+      </body>
+    </html>
+    """
+    return HttpResponse(body, content_type="text/html")
 
 
 @require_GET
@@ -173,13 +185,21 @@ def track_report(request, token):
 def landing(request, landing_slug):
     token = request.GET.get("t")
     tracking_pixel = ""
+    submit_form = ""
     if token:
         tracking_url = reverse("campaigns:track-landing", kwargs={"token": token})
         tracking_pixel = f'<img src="{tracking_url}" alt="" width="1" height="1" style="display:none;" />'
+        submit_url = reverse("campaigns:track-submit", kwargs={"token": token})
+        submit_form = f"""
+        <form method="post" action="{submit_url}">
+          <button type="submit">Confirmar</button>
+        </form>
+        """
     body = f"""
     <html>
       <body>
         <p>Gracias por visitar la campaña {landing_slug}.</p>
+        {submit_form}
         {tracking_pixel}
       </body>
     </html>
