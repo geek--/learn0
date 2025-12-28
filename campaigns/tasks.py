@@ -26,7 +26,11 @@ def process_campaigns() -> int:
                     send_campaign_email(campaign_recipient)
                     campaign_recipient.status = CampaignRecipient.Status.SENT
                     campaign_recipient.sent_at = timezone.now()
-                    campaign_recipient.save(update_fields=["status", "sent_at"])
+                    campaign_recipient.failed_at = None
+                    campaign_recipient.fail_reason = ""
+                    campaign_recipient.save(
+                        update_fields=["status", "sent_at", "failed_at", "fail_reason"]
+                    )
                     AuditLog.objects.create(
                         action="campaign_email_sent",
                         actor=campaign.created_by,
@@ -38,8 +42,10 @@ def process_campaigns() -> int:
                     )
                     processed += 1
             except Exception as exc:  # noqa: BLE001 - log and continue
-                campaign_recipient.status = CampaignRecipient.Status.BOUNCED
-                campaign_recipient.save(update_fields=["status"])
+                campaign_recipient.status = CampaignRecipient.Status.FAILED
+                campaign_recipient.failed_at = timezone.now()
+                campaign_recipient.fail_reason = str(exc)
+                campaign_recipient.save(update_fields=["status", "failed_at", "fail_reason"])
                 AuditLog.objects.create(
                     action="campaign_email_failed",
                     actor=campaign.created_by,

@@ -32,6 +32,10 @@ class CampaignRecipientAdmin(admin.ModelAdmin):
     list_filter = ("status", "opened_at", "clicked_at")
     search_fields = ("campaign__name", "recipient__email")
 
+    def save_model(self, request, obj, form, change) -> None:
+        obj.full_clean()
+        super().save_model(request, obj, form, change)
+
 
 @admin.register(EmailEvent)
 class EmailEventAdmin(admin.ModelAdmin):

@@ -4,7 +4,7 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils import timezone
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_GET, require_POST
 
 from campaigns.models import CampaignRecipient, EmailEvent
 from campaigns.tracking import (
@@ -121,8 +121,10 @@ def track_cta(request, token):
         **_build_event_payload(request),
     )
     now = timezone.now()
+    updates = {"cta_click_count": campaign_recipient.cta_click_count + 1}
     if campaign_recipient.cta_clicked_at is None:
-        CampaignRecipient.objects.filter(pk=campaign_recipient.pk).update(cta_clicked_at=now)
+        updates["cta_clicked_at"] = now
+    CampaignRecipient.objects.filter(pk=campaign_recipient.pk).update(**updates)
     landing_path = reverse(
         "campaigns:landing",
         kwargs={"landing_slug": campaign_recipient.campaign.landing_slug},
@@ -130,7 +132,7 @@ def track_cta(request, token):
     return redirect(landing_path)
 
 
-@require_GET
+@require_POST
 def track_submit_attempt(request, token):
     campaign_recipient = get_object_or_404(CampaignRecipient, tracking_token=token)
     EmailEvent.objects.create(
@@ -170,16 +172,34 @@ def track_report(request, token):
 @require_GET
 def landing(request, landing_slug):
     token = request.GET.get("t")
+    tracking_pixel = ""
     if token:
-        campaign_recipient = get_object_or_404(CampaignRecipient, tracking_token=token)
-        EmailEvent.objects.create(
-            recipient=campaign_recipient,
-            event_type=EmailEvent.EventType.LANDING_VIEW,
-            **_build_event_payload(request),
-        )
-        now = timezone.now()
-        updates = {"landing_view_count": campaign_recipient.landing_view_count + 1}
-        if campaign_recipient.landing_viewed_at is None:
-            updates["landing_viewed_at"] = now
-        CampaignRecipient.objects.filter(pk=campaign_recipient.pk).update(**updates)
-    return HttpResponse(f"Gracias por visitar la campaña {landing_slug}.", content_type="text/plain")
+        tracking_url = reverse("campaigns:track-landing", kwargs={"token": token})
+        tracking_pixel = f'<img src="{tracking_url}" alt="" width="1" height="1" style="display:none;" />'
+    body = f"""
+    <html>
+      <body>
+        <p>Gracias por visitar la campaña {landing_slug}.</p>
+        {tracking_pixel}
+      </body>
+    </html>
+    """
+    return HttpResponse(body, content_type="text/html")
+
+
+@require_GET
+def track_landing_view(request, token):
+    campaign_recipient = get_object_or_404(CampaignRecipient, tracking_token=token)
+    EmailEvent.objects.create(
+        recipient=campaign_recipient,
+        event_type=EmailEvent.EventType.LANDING_VIEW,
+        **_build_event_payload(request),
+    )
+    now = timezone.now()
+    updates = {"landing_view_count": campaign_recipient.landing_view_count + 1}
+    if campaign_recipient.landing_viewed_at is None:
+        updates["landing_viewed_at"] = now
+    CampaignRecipient.objects.filter(pk=campaign_recipient.pk).update(**updates)
+    response = HttpResponse(PIXEL_BYTES, content_type="image/gif")
+    response["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    return response
