@@ -267,6 +267,7 @@ def _build_flow_steps(recipient: CampaignRecipient) -> list[tuple[str, bool, obj
 
 @require_GET
 def dashboard(request):
+    body = ""
     campaigns = Campaign.objects.order_by("-start_at")
     selected_campaign = request.GET.get("campaign")
     selected_department = request.GET.get("department", "")
