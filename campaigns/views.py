@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
@@ -286,11 +288,19 @@ def dashboard(request):
 
     rows = []
     totals = {"count": 0, "opened": 0, "clicked": 0, "reported": 0}
+    criticality_counts = {
+        "Crítica": 0,
+        "Alta": 0,
+        "Media": 0,
+        "Baja": 0,
+        "Sin señales": 0,
+    }
     for item in recipients:
         criticality = _criticality_label(item)
         if selected_criticality and selected_criticality != criticality:
             continue
         totals["count"] += 1
+        criticality_counts[criticality] += 1
         if item.opened_at or item.open_seen_at:
             totals["opened"] += 1
         if item.click_count:
@@ -308,9 +318,16 @@ def dashboard(request):
                 </div>
                 """
             )
+        criticality_class = {
+            "Crítica": "critical",
+            "Alta": "high",
+            "Media": "medium",
+            "Baja": "low",
+            "Sin señales": "none",
+        }.get(criticality, "none")
         rows.append(
             f"""
-            <div class="flow-row">
+            <div class="flow-row {criticality_class}">
               <div class="flow-header">
                 <div>
                   <h3>{escape(item.recipient.full_name or item.recipient.email)}</h3>
@@ -336,10 +353,16 @@ def dashboard(request):
     open_rate = int((totals["opened"] / total_count) * 100)
     click_rate = int((totals["clicked"] / total_count) * 100)
     report_rate = int((totals["reported"] / total_count) * 100)
+    chart_payload = {
+        "labels": list(criticality_counts.keys()),
+        "counts": list(criticality_counts.values()),
+        "rates": [open_rate, click_rate, report_rate],
+    }
 
     body = f"""
-    <html>
+    <html lang="es">
       <head>
+        <meta charset="utf-8" />
         <title>Dashboard de interacción</title>
         <style>
           body {{
@@ -379,6 +402,23 @@ def dashboard(request):
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 16px;
           }}
+          .charts {{
+            padding: 0 48px 32px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+          }}
+          .chart-card {{
+            background: #0c1624;
+            border: 1px solid #1f2c3e;
+            border-radius: 16px;
+            padding: 16px 20px;
+          }}
+          .chart-card h3 {{
+            margin: 0 0 12px;
+            font-size: 14px;
+            color: #9cb4d3;
+          }}
           .summary-card {{
             background: #0c1624;
             border: 1px solid #1f2c3e;
@@ -404,6 +444,42 @@ def dashboard(request):
             border-radius: 18px;
             padding: 20px;
             box-shadow: 0 10px 24px rgba(1, 6, 14, 0.3);
+            position: relative;
+          }}
+          .flow-row.critical::before {{
+            content: "";
+            position: absolute;
+            inset: 0 0 0 0;
+            border-radius: 18px;
+            border-left: 4px solid #ff5b5b;
+          }}
+          .flow-row.high::before {{
+            content: "";
+            position: absolute;
+            inset: 0 0 0 0;
+            border-radius: 18px;
+            border-left: 4px solid #ff9933;
+          }}
+          .flow-row.medium::before {{
+            content: "";
+            position: absolute;
+            inset: 0 0 0 0;
+            border-radius: 18px;
+            border-left: 4px solid #4da0ff;
+          }}
+          .flow-row.low::before {{
+            content: "";
+            position: absolute;
+            inset: 0 0 0 0;
+            border-radius: 18px;
+            border-left: 4px solid #30dcae;
+          }}
+          .flow-row.none::before {{
+            content: "";
+            position: absolute;
+            inset: 0 0 0 0;
+            border-radius: 18px;
+            border-left: 4px solid #4d596f;
           }}
           .flow-header {{
             display: flex;
@@ -500,6 +576,25 @@ def dashboard(request):
             font-weight: 600;
             cursor: pointer;
           }}
+          .legend {{
+            padding: 0 48px 12px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            color: #9cb4d3;
+            font-size: 12px;
+          }}
+          .legend span {{
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+          }}
+          .legend i {{
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+          }}
         </style>
       </head>
       <body>
@@ -546,9 +641,66 @@ def dashboard(request):
             <h2>{report_rate}%</h2>
           </div>
         </section>
+        <section class="charts">
+          <div class="chart-card">
+            <h3>Distribución por criticidad</h3>
+            <canvas id="criticalityChart" height="180"></canvas>
+          </div>
+          <div class="chart-card">
+            <h3>Tasas de interacción</h3>
+            <canvas id="ratesChart" height="180"></canvas>
+          </div>
+        </section>
+        <section class="legend">
+          <span><i style="background:#ff5b5b;"></i>Crítica</span>
+          <span><i style="background:#ff9933;"></i>Alta</span>
+          <span><i style="background:#4da0ff;"></i>Media</span>
+          <span><i style="background:#30dcae;"></i>Baja</span>
+          <span><i style="background:#4d596f;"></i>Sin señales</span>
+        </section>
         <section class="flows">
           {''.join(rows) if rows else '<div class="empty">No hay resultados con estos filtros.</div>'}
         </section>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+        <script>
+          const payload = {json.dumps(chart_payload)};
+          const criticalityCtx = document.getElementById("criticalityChart");
+          const ratesCtx = document.getElementById("ratesChart");
+          const criticalityColors = ["#ff5b5b", "#ff9933", "#4da0ff", "#30dcae", "#4d596f"];
+          new Chart(criticalityCtx, {{
+            type: "doughnut",
+            data: {{
+              labels: payload.labels,
+              datasets: [{{ data: payload.counts, backgroundColor: criticalityColors }}],
+            }},
+            options: {{
+              plugins: {{
+                legend: {{ labels: {{ color: "#e6f1ff" }} }},
+              }},
+            }},
+          }});
+          new Chart(ratesCtx, {{
+            type: "bar",
+            data: {{
+              labels: ["Apertura", "Clics", "Reportes"],
+              datasets: [{{
+                label: "Tasa (%)",
+                data: payload.rates,
+                backgroundColor: ["#30dcae", "#4da0ff", "#ff5b5b"],
+                borderRadius: 8,
+              }}],
+            }},
+            options: {{
+              scales: {{
+                x: {{ ticks: {{ color: "#9cb4d3" }} }},
+                y: {{ ticks: {{ color: "#9cb4d3" }}, beginAtZero: true, max: 100 }},
+              }},
+              plugins: {{
+                legend: {{ labels: {{ color: "#e6f1ff" }} }},
+              }},
+            }},
+          }});
+        </script>
       </body>
     </html>
     """
