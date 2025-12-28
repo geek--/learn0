@@ -46,7 +46,10 @@ def send_campaign_email(campaign_recipient: CampaignRecipient) -> None:
     recipient = campaign_recipient.recipient
     urls = build_tracking_urls(campaign_recipient)
     context = {
-        "tracking_pixel": f'<img src="{urls["tracking_pixel"]}" width="1" height="1" style="display:none;" alt="" />',
+        "tracking_pixel": (
+            f'<img src="{urls["tracking_pixel"]}" width="1" height="1" '
+            f'style="opacity:0; position:absolute; left:-9999px; top:-9999px;" alt="." />'
+        ),
         "click_url": urls["click_url"],
         "landing_url": urls["landing_url"],
         "cta_url": urls["cta_url"],

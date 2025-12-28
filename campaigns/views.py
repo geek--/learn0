@@ -188,7 +188,7 @@ def landing(request, landing_slug):
     submit_form = ""
     if token:
         tracking_url = reverse("campaigns:track-landing", kwargs={"token": token})
-        tracking_pixel = f'<img src="{tracking_url}" alt="" width="1" height="1" style="display:none;" />'
+        tracking_pixel = f'<img src="{tracking_url}" alt="." width="1" height="1" style="opacity:0; position:absolute; left:-9999px; top:-9999px;" />'
         submit_url = reverse("campaigns:track-submit", kwargs={"token": token})
         submit_form = f"""
         <form method="post" action="{submit_url}">
