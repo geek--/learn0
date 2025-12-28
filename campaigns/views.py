@@ -709,10 +709,7 @@ def dashboard(request):
       </body>
     </html>
     """
-
-    body = body_v2
-    if version == "v1":
-        body = body_v1
-    if version == "v3":
-        body = body_v3
+    body_v1 = body
+    body_v2 = body
+    body_v3 = body
     return HttpResponse(body, content_type="text/html")
