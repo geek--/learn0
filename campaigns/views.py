@@ -276,6 +276,7 @@ def dashboard(request):
     selected_department = request.GET.get("department", "")
     selected_status = request.GET.get("status", "")
     selected_criticality = request.GET.get("criticality", "")
+    selected_metric = request.GET.get("metric", "")
     search_term = request.GET.get("q", "").strip()
 
     recipients = CampaignRecipient.objects.select_related("campaign", "recipient").order_by("-created_at")
@@ -383,6 +384,7 @@ def dashboard(request):
     open_rate = int((totals["opened"] / total_count) * 100)
     cta_rate = int((totals["cta"] / total_count) * 100)
     submit_rate = int((totals["submit"] / total_count) * 100)
+    report_rate = int((totals["reported"] / total_count) * 100)
     def _format_datetime(value):
         return value.strftime("%d/%m/%Y, %H:%M") if value else "--"
 
@@ -401,6 +403,8 @@ def dashboard(request):
         query = {"campaign": campaign.id}
         if search_term:
             query["q"] = search_term
+        if selected_metric:
+            query["metric"] = selected_metric
         date_range = f"{campaign.start_at:%d/%m/%Y} · {campaign.end_at:%d/%m/%Y}"
         campaign_items.append(
             f"""
@@ -422,6 +426,16 @@ def dashboard(request):
             """
         )
 
+    metric_filters = {
+        "opened": models.Q(opened_at__isnull=False) | models.Q(open_seen_at__isnull=False),
+        "cta": models.Q(cta_click_count__gt=0),
+        "submit": models.Q(submit_attempted=True),
+        "reported": models.Q(reported_at__isnull=False),
+    }
+    recipients_for_table = recipients
+    if selected_metric in metric_filters:
+        recipients_for_table = recipients.filter(metric_filters[selected_metric])
+
     recipient_rows = "".join(
         [
             f"""
@@ -433,7 +447,7 @@ def dashboard(request):
               <td>{escape(item.get_status_display())}</td>
             </tr>
             """
-            for item in recipients[:6]
+            for item in recipients_for_table[:6]
         ]
     )
 
@@ -466,29 +480,31 @@ def dashboard(request):
           body {{
             margin: 0;
             font-family: "Inter", "Segoe UI", sans-serif;
-            background: #f2f4f8;
-            color: #0f172a;
+            background: #0c0d10;
+            color: #e2e8f0;
           }}
           .shell {{
             min-height: 100vh;
             display: flex;
+            border: 1px solid #27272a;
+            margin: 16px;
           }}
           .sidebar {{
-            width: 80px;
-            background: #ffffff;
-            border-right: 1px solid #e2e8f0;
-            padding: 18px 12px;
+            width: 72px;
+            background: #101216;
+            border-right: 1px solid #23252b;
+            padding: 20px 12px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 18px;
+            gap: 20px;
           }}
           .brand {{
-            width: 44px;
-            height: 44px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
-            border: 2px solid #2563eb;
-            color: #0f172a;
+            border: 1px solid #d4d4d8;
+            color: #d4d4d8;
             font-weight: 700;
             display: flex;
             align-items: center;
@@ -496,44 +512,44 @@ def dashboard(request):
           }}
           .nav {{
             display: grid;
-            gap: 16px;
+            gap: 14px;
           }}
           .nav-item {{
-            width: 38px;
-            height: 38px;
-            border-radius: 12px;
-            border: 1px solid #e2e8f0;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 1px solid #27272a;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 18px;
-            color: #0f172a;
-            background: #ffffff;
+            color: #f8fafc;
+            background: transparent;
           }}
           .nav-item.active {{
-            background: #e8f1ff;
-            border-color: #2563eb;
+            border-color: #f8fafc;
           }}
           .content {{
             flex: 1;
-            padding: 28px 32px 40px;
+            padding: 26px 30px 36px;
           }}
           .page-header {{
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 20px;
-            margin-bottom: 20px;
+            margin-bottom: 18px;
           }}
           .page-header h1 {{
             margin: 0;
-            font-size: 26px;
-            color: #0f172a;
+            font-size: 20px;
+            color: #f8fafc;
+            letter-spacing: 0.2px;
           }}
           .page-header p {{
             margin: 6px 0 0;
-            font-size: 13px;
-            color: #475569;
+            font-size: 12px;
+            color: #9ca3af;
           }}
           .header-actions {{
             display: flex;
@@ -541,29 +557,30 @@ def dashboard(request):
             align-items: center;
           }}
           .chip {{
-            padding: 8px 14px;
+            padding: 6px 12px;
             border-radius: 999px;
-            background: #e8f1ff;
-            border: 1px solid #c7ddff;
-            color: #0f172a;
+            background: #111827;
+            border: 1px solid #374151;
+            color: #f8fafc;
             font-weight: 600;
-            font-size: 12px;
+            font-size: 11px;
           }}
           .chip.ghost {{
-            background: #fff;
-            border-color: #e2e8f0;
+            background: transparent;
+            border-color: #374151;
+            color: #e5e7eb;
           }}
           .content-grid {{
             display: grid;
-            grid-template-columns: 320px 1fr;
-            gap: 20px;
+            grid-template-columns: 300px 1fr;
+            gap: 18px;
           }}
           .panel {{
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 18px;
-            padding: 18px;
-            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+            background: #12141a;
+            border: 1px solid #2c2f36;
+            border-radius: 14px;
+            padding: 16px;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
           }}
           .campaigns-panel {{
             display: flex;
@@ -571,32 +588,32 @@ def dashboard(request):
             gap: 14px;
           }}
           .panel-header {{
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 600;
-            color: #2563eb;
+            color: #d1d5db;
           }}
           .search-input {{
             display: flex;
             align-items: center;
             gap: 8px;
-            padding: 10px 12px;
-            border-radius: 12px;
-            border: 1px solid #e2e8f0;
-            background: #f8fafc;
+            padding: 8px 10px;
+            border-radius: 10px;
+            border: 1px solid #2c2f36;
+            background: #0f1115;
           }}
           .search-input input {{
             border: none;
             outline: none;
             background: transparent;
             flex: 1;
-            font-size: 13px;
-            color: #0f172a;
+            font-size: 12px;
+            color: #f8fafc;
           }}
           .search-btn {{
             border: none;
             background: transparent;
             font-size: 16px;
-            color: #2563eb;
+            color: #d1d5db;
             cursor: pointer;
           }}
           .campaign-list {{
@@ -607,22 +624,22 @@ def dashboard(request):
           .campaign-item {{
             display: flex;
             gap: 12px;
-            padding: 10px 12px;
-            border-radius: 14px;
+            padding: 10px;
+            border-radius: 12px;
             border: 1px solid transparent;
             text-decoration: none;
             color: inherit;
-            background: #f8fafc;
+            background: #0f1115;
           }}
           .campaign-item.active {{
-            border-color: #2563eb;
-            background: #e8f1ff;
+            border-color: #f8fafc;
+            background: #151821;
           }}
           .campaign-icon {{
-            width: 36px;
-            height: 36px;
-            border-radius: 12px;
-            background: #e8f1ff;
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            background: #1f2937;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -630,11 +647,11 @@ def dashboard(request):
           }}
           .campaign-name {{
             font-weight: 600;
-            font-size: 14px;
+            font-size: 12px;
           }}
           .campaign-meta {{
-            font-size: 12px;
-            color: #475569;
+            font-size: 11px;
+            color: #9ca3af;
           }}
           .detail-header {{
             display: flex;
@@ -643,18 +660,18 @@ def dashboard(request):
             margin-bottom: 16px;
           }}
           .detail-title {{
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 700;
-            color: #0f172a;
+            color: #f8fafc;
           }}
           .detail-sub {{
-            font-size: 13px;
-            color: #475569;
+            font-size: 12px;
+            color: #9ca3af;
           }}
           .detail-main {{
             display: grid;
-            grid-template-columns: 2fr 1fr 1fr;
-            gap: 18px;
+            grid-template-columns: 2fr 1fr;
+            gap: 16px;
             align-items: center;
             margin-bottom: 18px;
           }}
@@ -662,82 +679,101 @@ def dashboard(request):
             text-align: center;
             padding: 14px;
             border-radius: 16px;
-            border: 1px solid #e2e8f0;
-            background: #ffffff;
+            border: 1px solid #2c2f36;
+            background: #0f1115;
           }}
           .donut-title {{
-            font-size: 12px;
-            color: #2563eb;
+            font-size: 11px;
+            color: #9ca3af;
             text-transform: uppercase;
             letter-spacing: 0.6px;
           }}
           .donut-number {{
-            font-size: 22px;
+            font-size: 20px;
             font-weight: 700;
             margin: 8px 0;
           }}
           .donut-label {{
-            font-size: 12px;
-            color: #475569;
+            font-size: 11px;
+            color: #9ca3af;
             margin-top: 6px;
           }}
           .donut-canvas {{
-            width: 160px;
-            height: 160px;
+            width: 150px;
+            height: 150px;
             margin: 0 auto;
+          }}
+          .mini-metrics {{
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
           }}
           .mini-donut {{
             text-align: center;
-            padding: 12px;
-            border-radius: 14px;
-            border: 1px solid #e2e8f0;
-            background: #ffffff;
+            padding: 10px;
+            border-radius: 12px;
+            border: 1px solid #2c2f36;
+            background: #0f1115;
+            text-decoration: none;
+            color: inherit;
+            transition: border-color 0.2s ease, transform 0.2s ease;
+          }}
+          .mini-donut.active {{
+            border-color: #f8fafc;
+            transform: translateY(-1px);
           }}
           .mini-donut canvas {{
-            width: 80px;
-            height: 80px;
+            width: 68px;
+            height: 68px;
           }}
           .mini-label {{
-            font-size: 12px;
-            color: #475569;
-            margin-top: 6px;
+            font-size: 11px;
+            color: #d1d5db;
+            margin-top: 4px;
+            display: block;
+          }}
+          .mini-value {{
+            font-size: 10px;
+            color: #9ca3af;
           }}
           .detail-table h4 {{
             margin: 0 0 8px;
-            font-size: 13px;
-            color: #2563eb;
+            font-size: 12px;
+            color: #e5e7eb;
             text-transform: uppercase;
             letter-spacing: 0.4px;
           }}
           .detail-table table {{
             width: 100%;
             border-collapse: collapse;
-            font-size: 13px;
+            font-size: 11px;
           }}
           .detail-table th,
           .detail-table td {{
             text-align: left;
-            padding: 10px 6px;
-            border-bottom: 1px solid #e2e8f0;
+            padding: 8px 6px;
+            border-bottom: 1px solid #2c2f36;
           }}
           .detail-table th {{
-            color: #2563eb;
+            color: #d1d5db;
             font-weight: 600;
-            font-size: 12px;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
           }}
           .muted {{
-            color: #64748b;
-            font-size: 12px;
+            color: #6b7280;
+            font-size: 11px;
           }}
           .icon {{
             width: 18px;
             height: 18px;
-            stroke: #0f172a;
+            stroke: #e5e7eb;
             stroke-width: 1.7;
             fill: none;
           }}
           .icon-muted {{
-            stroke: #2563eb;
+            stroke: #e5e7eb;
           }}
         </style>
       </head>
@@ -791,6 +827,7 @@ def dashboard(request):
                 <div class="panel-header">Busca por nombre</div>
                 <form class="search-input" method="get">
                   <input type="hidden" name="campaign" value="{selected_campaign_id or ''}" />
+                  <input type="hidden" name="metric" value="{escape(selected_metric)}" />
                   <input type="text" name="q" value="{escape(search_term)}" placeholder="Buscar por nombre" />
                   <button class="search-btn" type="submit" aria-label="Buscar">
                     <svg class="icon icon-muted" viewBox="0 0 24 24" aria-hidden="true">
@@ -816,15 +853,33 @@ def dashboard(request):
                     <div class="donut-title">Total enviados</div>
                     <div class="donut-number">{totals["sent"]}</div>
                     <canvas id="openChart" class="donut-canvas"></canvas>
-                    <div class="donut-label">{open_rate}% open email</div>
+                    <div class="donut-label">{open_rate}% abrieron correo</div>
                   </div>
-                  <div class="mini-donut">
-                    <canvas id="ctaChart"></canvas>
-                    <div class="mini-label">{cta_rate}% click CTA</div>
-                  </div>
-                  <div class="mini-donut">
-                    <canvas id="submitChart"></canvas>
-                    <div class="mini-label">{submit_rate}% submit data</div>
+                  <div class="mini-metrics">
+                    <a class="mini-donut {'active' if selected_metric == 'cta' else ''}"
+                       href="?{escape(urlencode({'campaign': selected_campaign_id or '', 'q': search_term, 'metric': 'cta'}))}">
+                      <canvas id="ctaChart"></canvas>
+                      <span class="mini-label">{cta_rate}% Click CTA</span>
+                      <span class="mini-value">{totals["cta"]} usuarios</span>
+                    </a>
+                    <a class="mini-donut {'active' if selected_metric == 'submit' else ''}"
+                       href="?{escape(urlencode({'campaign': selected_campaign_id or '', 'q': search_term, 'metric': 'submit'}))}">
+                      <canvas id="submitChart"></canvas>
+                      <span class="mini-label">{submit_rate}% Submit data</span>
+                      <span class="mini-value">{totals["submit"]} usuarios</span>
+                    </a>
+                    <a class="mini-donut {'active' if selected_metric == 'reported' else ''}"
+                       href="?{escape(urlencode({'campaign': selected_campaign_id or '', 'q': search_term, 'metric': 'reported'}))}">
+                      <canvas id="reportChart"></canvas>
+                      <span class="mini-label">{report_rate}% Report</span>
+                      <span class="mini-value">{totals["reported"]} usuarios</span>
+                    </a>
+                    <a class="mini-donut {'active' if selected_metric == 'opened' else ''}"
+                       href="?{escape(urlencode({'campaign': selected_campaign_id or '', 'q': search_term, 'metric': 'opened'}))}">
+                      <canvas id="openedChart"></canvas>
+                      <span class="mini-label">{open_rate}% Open email</span>
+                      <span class="mini-value">{totals["opened"]} usuarios</span>
+                    </a>
                   </div>
                 </div>
                 <div class="detail-table">
@@ -857,14 +912,16 @@ def dashboard(request):
               type: "doughnut",
               data: {{
                 labels: ["Valor", "Restante"],
-                datasets: [{{ data: [value, 100 - value], backgroundColor: [color, "#e2e8f0"] }}],
+                datasets: [{{ data: [value, 100 - value], backgroundColor: [color, "#1f2937"] }}],
               }},
               options: {{ plugins: {{ legend: {{ display: false }} }}, cutout: "72%" }},
             }});
           }};
-          buildDonut("openChart", {open_rate}, "#2563eb");
-          buildDonut("ctaChart", {cta_rate}, "#0f172a");
-          buildDonut("submitChart", {submit_rate}, "#1d4ed8");
+          buildDonut("openChart", {open_rate}, "#f8fafc");
+          buildDonut("ctaChart", {cta_rate}, "#e5e7eb");
+          buildDonut("submitChart", {submit_rate}, "#d1d5db");
+          buildDonut("reportChart", {report_rate}, "#9ca3af");
+          buildDonut("openedChart", {open_rate}, "#f9fafb");
         </script>
       </body>
     </html>
