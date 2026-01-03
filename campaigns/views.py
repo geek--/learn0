@@ -1323,6 +1323,118 @@ def dashboard_v2(request):
             flex: 1;
             padding: 18px 28px 32px;
           }
+          .content-grid {
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            gap: 18px;
+          }
+          .panel {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            padding: 14px;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+          }
+          .search {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            background: #f9fafb;
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 12px;
+          }
+          .search input {
+            border: none;
+            outline: none;
+            background: transparent;
+            flex: 1;
+            font-size: 12px;
+            color: #111827;
+          }
+          .campaign-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+          }
+          .campaign-card {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            padding: 10px 12px;
+            border-radius: 14px;
+            border: 1px solid #e5e7eb;
+            text-decoration: none;
+            color: inherit;
+            background: #ffffff;
+          }
+          .campaign-card.active {
+            border-color: #c7dcff;
+            background: #eaf1ff;
+            color: #1d4ed8;
+          }
+          .campaign-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            display: grid;
+            place-items: center;
+            background: #f3f4f6;
+            color: #111827;
+            font-weight: 700;
+          }
+          .campaign-name {
+            font-size: 13px;
+            font-weight: 600;
+          }
+          .campaign-meta {
+            font-size: 11px;
+            color: #9ca3af;
+          }
+          .detail-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+          }
+          .detail-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 14px;
+            background: #eaf1ff;
+            color: #1d4ed8;
+            display: grid;
+            place-items: center;
+            font-weight: 700;
+          }
+          .detail-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin: 0;
+          }
+          .detail-menu {
+            display: flex;
+            gap: 16px;
+            border-bottom: 1px solid #e5e7eb;
+            padding-bottom: 10px;
+            margin-bottom: 16px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #6b7280;
+          }
+          .detail-menu a {
+            text-decoration: none;
+            color: inherit;
+            padding-bottom: 6px;
+            border-bottom: 2px solid transparent;
+          }
+          .detail-menu a.active {
+            color: #1d4ed8;
+            border-color: #1d4ed8;
+          }
           .canvas {
             background: #ffffff;
             border: 1px solid #e5e7eb;
@@ -1443,9 +1555,53 @@ def dashboard_v2(request):
             </header>
 
             <section class="content">
-              <div class="canvas">
-                <div class="canvas-inner">
-                  <div class="muted">Contenido flexible</div>
+              <div class="content-grid">
+                <aside class="panel">
+                  <div class="search">
+                    <span>🔍</span>
+                    <input type="text" placeholder="Buscar campaña" />
+                  </div>
+                  <div class="campaign-list">
+                    <a class="campaign-card active" href="#">
+                      <div class="campaign-avatar">CP</div>
+                      <div>
+                        <div class="campaign-name">Campaña Phishing</div>
+                        <div class="campaign-meta">Jul 2024 · Activa</div>
+                      </div>
+                    </a>
+                    <a class="campaign-card" href="#">
+                      <div class="campaign-avatar">IN</div>
+                      <div>
+                        <div class="campaign-name">Ingeniería Social</div>
+                        <div class="campaign-meta">Jun 2024 · 120 usuarios</div>
+                      </div>
+                    </a>
+                    <a class="campaign-card" href="#">
+                      <div class="campaign-avatar">RF</div>
+                      <div>
+                        <div class="campaign-name">Reporte Falso</div>
+                        <div class="campaign-meta">May 2024 · Cerrada</div>
+                      </div>
+                    </a>
+                  </div>
+                </aside>
+
+                <div class="canvas">
+                  <div class="canvas-inner">
+                    <div class="detail-header">
+                      <div class="detail-icon">CP</div>
+                      <div>
+                        <p class="detail-title">Campaña Phishing</p>
+                        <div class="muted">Última actualización hace 2 días</div>
+                      </div>
+                    </div>
+                    <nav class="detail-menu">
+                      <a class="active" href="#">Resumen</a>
+                      <a href="#">Usuarios</a>
+                      <a href="#">Areas</a>
+                    </nav>
+                    <div class="muted">Contenido flexible</div>
+                  </div>
                 </div>
               </div>
             </section>
