@@ -1099,3 +1099,335 @@ def dashboard(request):
     body_v2 = body_v3
     body = body_v3
     return HttpResponse(body_v3, content_type="text/html")
+
+
+@require_GET
+def dashboard_v2(request):
+    body_v2 = """
+    <html lang="es">
+      <head>
+        <meta charset="utf-8" />
+        <title>Dashboard v2</title>
+        <style>
+          :root {
+            color-scheme: light;
+          }
+          * {
+            box-sizing: border-box;
+          }
+          body {
+            margin: 0;
+            font-family: "Inter", "Segoe UI", sans-serif;
+            background: #f6f7fb;
+            color: #1f2937;
+          }
+          .shell {
+            min-height: 100vh;
+            display: flex;
+            gap: 0;
+          }
+          .sidebar {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            width: 82px;
+            background: #ffffff;
+            border-right: 1px solid #e5e7eb;
+            display: flex;
+            flex-direction: column;
+            padding: 18px 14px;
+            gap: 18px;
+            transition: width 0.2s ease;
+            z-index: 2;
+            overflow: hidden;
+          }
+          .sidebar.expanded {
+            width: 230px;
+          }
+          .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            color: #2563eb;
+            font-size: 16px;
+          }
+          .brand-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: 2px solid #2563eb;
+            display: grid;
+            place-items: center;
+            font-size: 16px;
+          }
+          .toggle {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            border: 1px solid #e5e7eb;
+            background: #f9fafb;
+            cursor: pointer;
+            display: grid;
+            place-items: center;
+            color: #111827;
+          }
+          .nav {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+          }
+          .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-radius: 14px;
+            padding: 10px 12px;
+            color: #1f2937;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            border: 1px solid transparent;
+          }
+          .sidebar:not(.expanded) .nav-item {
+            justify-content: center;
+            padding: 10px 0;
+          }
+          .nav-item svg {
+            width: 20px;
+            height: 20px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 1.8;
+          }
+          .nav-item.active {
+            background: #eaf1ff;
+            border-color: #c7dcff;
+            color: #1d4ed8;
+          }
+          .nav-label {
+            white-space: nowrap;
+            opacity: 0;
+            transform: translateX(-6px);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+          }
+          .sidebar:not(.expanded) .nav-label,
+          .sidebar:not(.expanded) .brand span {
+            display: none;
+          }
+          .sidebar.expanded .nav-label,
+          .sidebar.expanded .brand span {
+            opacity: 1;
+            transform: translateX(0);
+          }
+          .brand span {
+            opacity: 0;
+            transform: translateX(-6px);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+          }
+          .nav-footer {
+            margin-top: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+          }
+          .sidebar:not(.expanded) .nav-footer {
+            align-items: center;
+          }
+          .nav-dot {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 1px solid #e5e7eb;
+            display: grid;
+            place-items: center;
+            color: #6b7280;
+          }
+          .main {
+            flex: 1;
+            margin-left: 82px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+          }
+          .sidebar.expanded ~ .main {
+            margin-left: 230px;
+          }
+          .header {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            background: #f6f7fb;
+            padding: 18px 28px 12px;
+            border-bottom: 1px solid #e5e7eb;
+          }
+          .header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+          }
+          .header-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+          }
+          .header h1 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 700;
+          }
+          .header p {
+            margin: 4px 0 0;
+            font-size: 12px;
+            color: #6b7280;
+          }
+          .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            color: #4b5563;
+          }
+          .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            font-weight: 600;
+            color: #111827;
+          }
+          .content {
+            flex: 1;
+            padding: 18px 28px 32px;
+          }
+          .canvas {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 18px;
+            min-height: 70vh;
+            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.06);
+            position: relative;
+            overflow: hidden;
+          }
+          .canvas::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 22%;
+            background: radial-gradient(circle at 20% 20%, #eaf1ff 0, transparent 55%),
+              radial-gradient(circle at 20% 80%, #e8f3ff 0, transparent 60%);
+            opacity: 0.9;
+          }
+          .canvas-inner {
+            position: relative;
+            z-index: 1;
+            padding: 28px;
+          }
+          .muted {
+            color: #94a3b8;
+            font-size: 13px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="shell">
+          <aside class="sidebar expanded" id="sidebar">
+            <div class="brand">
+              <div class="brand-icon">∞</div>
+              <span>Security</span>
+            </div>
+            <button class="toggle" id="toggle" aria-label="Expandir menú">☰</button>
+            <nav class="nav">
+              <a class="nav-item active" data-title="Campañas" href="#">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4 13h4v7H4z"></path>
+                  <path d="M10 9h4v11h-4z"></path>
+                  <path d="M16 5h4v15h-4z"></path>
+                </svg>
+                <span class="nav-label">Campañas</span>
+              </a>
+              <a class="nav-item" data-title="Resultados" href="#">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4 4h16v16H4z"></path>
+                  <path d="M8 8h8v8H8z"></path>
+                </svg>
+                <span class="nav-label">Resultados</span>
+              </a>
+              <a class="nav-item" data-title="Contactos" href="#">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M16 11a4 4 0 1 1-8 0 4 4 0 0 1 8 0z"></path>
+                  <path d="M4 20a8 8 0 0 1 16 0"></path>
+                </svg>
+                <span class="nav-label">Contactos</span>
+              </a>
+              <a class="nav-item" data-title="Reportes" href="#">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M5 4h10l4 4v12H5z"></path>
+                  <path d="M9 14h6"></path>
+                  <path d="M9 10h6"></path>
+                </svg>
+                <span class="nav-label">Reportes</span>
+              </a>
+            </nav>
+            <div class="nav-footer">
+              <div class="nav-dot">?</div>
+              <div class="nav-dot">⚙</div>
+              <div class="nav-dot">⏻</div>
+            </div>
+          </aside>
+
+          <main class="main">
+            <header class="header">
+              <div class="header-row">
+                <div class="header-title">
+                  <div>
+                    <h1 id="headerTitle">Campañas</h1>
+                    <p>Review performance results and more.</p>
+                  </div>
+                </div>
+                <div class="header-actions">
+                  <span class="pill">● Título</span>
+                  <span>Last 28 days: 27 Jul 2024 - 23 Aug 2024</span>
+                </div>
+              </div>
+            </header>
+
+            <section class="content">
+              <div class="canvas">
+                <div class="canvas-inner">
+                  <div class="muted">Contenido flexible</div>
+                </div>
+              </div>
+            </section>
+          </main>
+        </div>
+        <script>
+          const sidebar = document.getElementById("sidebar");
+          const toggle = document.getElementById("toggle");
+          const headerTitle = document.getElementById("headerTitle");
+          const items = document.querySelectorAll(".nav-item");
+
+          toggle.addEventListener("click", () => {
+            sidebar.classList.toggle("expanded");
+          });
+
+          items.forEach((item) => {
+            item.addEventListener("click", (event) => {
+              event.preventDefault();
+              items.forEach((node) => node.classList.remove("active"));
+              item.classList.add("active");
+              headerTitle.textContent = item.dataset.title || "Campañas";
+            });
+          });
+        </script>
+      </body>
+    </html>
+    """
+    return HttpResponse(body_v2, content_type="text/html")
