@@ -893,6 +893,13 @@ def dashboard(request):
                   <span class="tab">Item2</span>
                   <span class="tab">Item3</span>
                 </div>
+                <div class="detail-tabs">
+                  <span class="tab active">Resumen</span>
+                  <span class="tab">Por Usuario</span>
+                  <span class="tab">Item2</span>
+                  <span class="tab">Item2</span>
+                  <span class="tab">Item3</span>
+                </div>
                 <div class="detail-main">
                   <div class="donut-card">
                     <div class="donut-title">Total enviados</div>
