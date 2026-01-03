@@ -1103,7 +1103,39 @@ def dashboard(request):
 
 @require_GET
 def dashboard_v2(request):
-    body_v2 = """
+    campaigns = Campaign.objects.order_by("-start_at")
+    selected_campaign = campaigns.first()
+    selected_campaign_name = escape(selected_campaign.name) if selected_campaign else "Sin campañas"
+    selected_campaign_initials = (
+        "".join(word[0] for word in selected_campaign.name.split()[:2]).upper()
+        if selected_campaign
+        else "--"
+    )
+    selected_campaign_date = (
+        f"{selected_campaign.start_at:%d %b %Y} · {selected_campaign.end_at:%d %b %Y}"
+        if selected_campaign
+        else ""
+    )
+
+    campaign_cards = []
+    for index, campaign in enumerate(campaigns):
+        initials = "".join(word[0] for word in campaign.name.split()[:2]).upper() or "--"
+        date_range = f"{campaign.start_at:%d %b %Y} · {campaign.end_at:%d %b %Y}"
+        campaign_cards.append(
+            f"""
+            <a class="campaign-card {'active' if index == 0 else ''}" href="#">
+              <div class="campaign-avatar">{escape(initials)}</div>
+              <div>
+                <div class="campaign-name">{escape(campaign.name)}</div>
+                <div class="campaign-meta">{escape(date_range)}</div>
+              </div>
+            </a>
+            """
+        )
+
+    campaign_list_html = "".join(campaign_cards) or '<div class="muted">Sin campañas disponibles.</div>'
+
+    body_v2 = f"""
     <html lang="es">
       <head>
         <meta charset="utf-8" />
@@ -1347,6 +1379,13 @@ def dashboard_v2(request):
             color: #6b7280;
             margin-bottom: 12px;
           }
+          .search svg {
+            width: 16px;
+            height: 16px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 1.8;
+          }
           .search input {
             border: none;
             outline: none;
@@ -1443,17 +1482,6 @@ def dashboard_v2(request):
             box-shadow: 0 10px 25px rgba(15, 23, 42, 0.06);
             position: relative;
             overflow: hidden;
-          }
-          .canvas::before {
-            content: "";
-            position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: 22%;
-            background: radial-gradient(circle at 20% 20%, #eaf1ff 0, transparent 55%),
-              radial-gradient(circle at 20% 80%, #e8f3ff 0, transparent 60%);
-            opacity: 0.9;
           }
           .canvas-inner {
             position: relative;
@@ -1558,41 +1586,24 @@ def dashboard_v2(request):
               <div class="content-grid">
                 <aside class="panel">
                   <div class="search">
-                    <span>🔍</span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <circle cx="11" cy="11" r="7"></circle>
+                      <path d="M16.5 16.5L21 21"></path>
+                    </svg>
                     <input type="text" placeholder="Buscar campaña" />
                   </div>
                   <div class="campaign-list">
-                    <a class="campaign-card active" href="#">
-                      <div class="campaign-avatar">CP</div>
-                      <div>
-                        <div class="campaign-name">Campaña Phishing</div>
-                        <div class="campaign-meta">Jul 2024 · Activa</div>
-                      </div>
-                    </a>
-                    <a class="campaign-card" href="#">
-                      <div class="campaign-avatar">IN</div>
-                      <div>
-                        <div class="campaign-name">Ingeniería Social</div>
-                        <div class="campaign-meta">Jun 2024 · 120 usuarios</div>
-                      </div>
-                    </a>
-                    <a class="campaign-card" href="#">
-                      <div class="campaign-avatar">RF</div>
-                      <div>
-                        <div class="campaign-name">Reporte Falso</div>
-                        <div class="campaign-meta">May 2024 · Cerrada</div>
-                      </div>
-                    </a>
+                    {campaign_list_html}
                   </div>
                 </aside>
 
                 <div class="canvas">
                   <div class="canvas-inner">
                     <div class="detail-header">
-                      <div class="detail-icon">CP</div>
+                      <div class="detail-icon">{selected_campaign_initials}</div>
                       <div>
-                        <p class="detail-title">Campaña Phishing</p>
-                        <div class="muted">Última actualización hace 2 días</div>
+                        <p class="detail-title">{selected_campaign_name}</p>
+                        <div class="campaign-meta">{selected_campaign_date}</div>
                       </div>
                     </div>
                     <nav class="detail-menu">
@@ -1600,7 +1611,6 @@ def dashboard_v2(request):
                       <a href="#">Usuarios</a>
                       <a href="#">Areas</a>
                     </nav>
-                    <div class="muted">Contenido flexible</div>
                   </div>
                 </div>
               </div>
