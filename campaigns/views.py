@@ -385,6 +385,21 @@ def dashboard(request):
     cta_rate = int((totals["cta"] / total_count) * 100)
     submit_rate = int((totals["submit"] / total_count) * 100)
     report_rate = int((totals["reported"] / total_count) * 100)
+
+    def _circumference(radius: int) -> float:
+        return 2 * 3.141592653589793 * radius
+
+    def _dash_offset(rate: int, radius: int) -> float:
+        return _circumference(radius) * (1 - rate / 100)
+
+    big_radius = 46
+    small_radius = 18
+    big_circ = _circumference(big_radius)
+    small_circ = _circumference(small_radius)
+    big_open_offset = _dash_offset(open_rate, big_radius)
+    small_cta_offset = _dash_offset(cta_rate, small_radius)
+    small_submit_offset = _dash_offset(submit_rate, small_radius)
+    small_report_offset = _dash_offset(report_rate, small_radius)
     def _format_datetime(value):
         return value.strftime("%d/%m/%Y, %H:%M") if value else "--"
 
@@ -736,47 +751,70 @@ def dashboard(request):
           }}
           .detail-main {{
             display: grid;
-            grid-template-columns: 2fr 1fr;
+            grid-template-columns: 1.4fr 1fr;
             gap: 16px;
             align-items: center;
             margin-bottom: 18px;
           }}
-          .donut-card {{
-            text-align: center;
-            padding: 14px;
+          .summary-card {{
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            padding: 18px;
             border-radius: 16px;
             border: 1px solid #dfe3ee;
             background: #ffffff;
           }}
-          .donut-title {{
-            font-size: 11px;
-            color: #1c1e21;
-            text-transform: uppercase;
-            letter-spacing: 0.6px;
+          .summary-meta {{
+            display: grid;
+            gap: 6px;
           }}
-          .donut-number {{
-            font-size: 20px;
+          .summary-rate {{
+            font-size: 22px;
             font-weight: 700;
-            margin: 8px 0;
+            color: #1c1e21;
           }}
-          .donut-label {{
-            font-size: 11px;
+          .summary-label {{
+            font-size: 12px;
+            color: #1c1e21;
+          }}
+          .summary-sub {{
+            font-size: 12px;
             color: #606770;
-            margin-top: 6px;
           }}
-          .donut-canvas {{
-            width: 150px;
-            height: 150px;
-            margin: 0 auto;
+          .ring-chart {{
+            width: 140px;
+            height: 140px;
+          }}
+          .ring-chart svg {{
+            width: 100%;
+            height: 100%;
+          }}
+          .ring-bg {{
+            stroke: #1c1e21;
+            stroke-width: 6;
+            fill: none;
+          }}
+          .ring-inner {{
+            stroke: #1c1e21;
+            stroke-width: 3;
+            fill: none;
+          }}
+          .ring-progress {{
+            stroke: #1877f2;
+            stroke-width: 10;
+            fill: none;
+            stroke-linecap: round;
           }}
           .mini-metrics {{
             display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 12px;
+            gap: 14px;
           }}
           .mini-donut {{
-            text-align: center;
-            padding: 10px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 10px 12px;
             border-radius: 12px;
             border: 1px solid #dfe3ee;
             background: #ffffff;
@@ -788,19 +826,37 @@ def dashboard(request):
             border-color: #1877f2;
             transform: translateY(-1px);
           }}
-          .mini-donut canvas {{
-            width: 68px;
-            height: 68px;
+          .mini-ring {{
+            width: 54px;
+            height: 54px;
           }}
-          .mini-label {{
-            font-size: 11px;
+          .mini-ring svg {{
+            width: 100%;
+            height: 100%;
+          }}
+          .mini-title {{
+            font-size: 12px;
             color: #1c1e21;
-            margin-top: 4px;
-            display: block;
+            font-weight: 600;
           }}
           .mini-value {{
-            font-size: 10px;
+            font-size: 12px;
+            color: #1c1e21;
+            font-weight: 700;
+            margin-right: 6px;
+          }}
+          .mini-sub {{
+            font-size: 11px;
             color: #606770;
+          }}
+          .ring-progress.cta {{
+            stroke: #ff5c8d;
+          }}
+          .ring-progress.submit {{
+            stroke: #f7b928;
+          }}
+          .ring-progress.report {{
+            stroke: #31a24c;
           }}
           .detail-table h4 {{
             margin: 0 0 8px;
@@ -913,30 +969,82 @@ def dashboard(request):
                   <span class="tab">Item3</span>
                 </div>
                 <div class="detail-main">
-                  <div class="donut-card">
-                    <div class="donut-title">Total enviados</div>
-                    <div class="donut-number">{totals["sent"]}</div>
-                    <canvas id="openChart" class="donut-canvas"></canvas>
-                    <div class="donut-label">{open_rate}% abrieron correo</div>
+                  <div class="summary-card">
+                    <div class="ring-chart" aria-hidden="true">
+                      <svg viewBox="0 0 120 120">
+                        <circle class="ring-bg" cx="60" cy="60" r="52"></circle>
+                        <circle class="ring-inner" cx="60" cy="60" r="34"></circle>
+                        <circle class="ring-progress"
+                                cx="60"
+                                cy="60"
+                                r="{big_radius}"
+                                stroke-dasharray="{big_circ:.2f}"
+                                stroke-dashoffset="{big_open_offset:.2f}"></circle>
+                      </svg>
+                    </div>
+                    <div class="summary-meta">
+                      <div class="summary-rate">{open_rate}%</div>
+                      <div class="summary-label">Abrieron el correo</div>
+                      <div class="summary-sub">Índice de apertura sobre enviados.</div>
+                    </div>
                   </div>
                   <div class="mini-metrics">
                     <a class="mini-donut {'active' if selected_metric == 'cta' else ''}"
                        href="?{escape(urlencode({'campaign': selected_campaign_id or '', 'q': search_term, 'metric': 'cta'}))}">
-                      <canvas id="ctaChart"></canvas>
-                      <span class="mini-label">{cta_rate}% Click CTA</span>
-                      <span class="mini-value">{totals["cta"]} usuarios</span>
+                      <div class="mini-ring" aria-hidden="true">
+                        <svg viewBox="0 0 60 60">
+                          <circle class="ring-bg" cx="30" cy="30" r="24"></circle>
+                          <circle class="ring-inner" cx="30" cy="30" r="16"></circle>
+                          <circle class="ring-progress cta"
+                                  cx="30"
+                                  cy="30"
+                                  r="{small_radius}"
+                                  stroke-dasharray="{small_circ:.2f}"
+                                  stroke-dashoffset="{small_cta_offset:.2f}"></circle>
+                        </svg>
+                      </div>
+                      <div>
+                        <span class="mini-title"><span class="mini-value">{cta_rate}%</span>Click CTA</span>
+                        <div class="mini-sub">{totals["cta"]} usuarios</div>
+                      </div>
                     </a>
                     <a class="mini-donut {'active' if selected_metric == 'submit' else ''}"
                        href="?{escape(urlencode({'campaign': selected_campaign_id or '', 'q': search_term, 'metric': 'submit'}))}">
-                      <canvas id="submitChart"></canvas>
-                      <span class="mini-label">{submit_rate}% Submit data</span>
-                      <span class="mini-value">{totals["submit"]} usuarios</span>
+                      <div class="mini-ring" aria-hidden="true">
+                        <svg viewBox="0 0 60 60">
+                          <circle class="ring-bg" cx="30" cy="30" r="24"></circle>
+                          <circle class="ring-inner" cx="30" cy="30" r="16"></circle>
+                          <circle class="ring-progress submit"
+                                  cx="30"
+                                  cy="30"
+                                  r="{small_radius}"
+                                  stroke-dasharray="{small_circ:.2f}"
+                                  stroke-dashoffset="{small_submit_offset:.2f}"></circle>
+                        </svg>
+                      </div>
+                      <div>
+                        <span class="mini-title"><span class="mini-value">{submit_rate}%</span>Submited Data</span>
+                        <div class="mini-sub">{totals["submit"]} usuarios</div>
+                      </div>
                     </a>
                     <a class="mini-donut {'active' if selected_metric == 'reported' else ''}"
                        href="?{escape(urlencode({'campaign': selected_campaign_id or '', 'q': search_term, 'metric': 'reported'}))}">
-                      <canvas id="reportChart"></canvas>
-                      <span class="mini-label">{report_rate}% Report</span>
-                      <span class="mini-value">{totals["reported"]} usuarios</span>
+                      <div class="mini-ring" aria-hidden="true">
+                        <svg viewBox="0 0 60 60">
+                          <circle class="ring-bg" cx="30" cy="30" r="24"></circle>
+                          <circle class="ring-inner" cx="30" cy="30" r="16"></circle>
+                          <circle class="ring-progress report"
+                                  cx="30"
+                                  cy="30"
+                                  r="{small_radius}"
+                                  stroke-dasharray="{small_circ:.2f}"
+                                  stroke-dashoffset="{small_report_offset:.2f}"></circle>
+                        </svg>
+                      </div>
+                      <div>
+                        <span class="mini-title"><span class="mini-value">{report_rate}%</span>Report</span>
+                        <div class="mini-sub">{totals["reported"]} usuarios</div>
+                      </div>
                     </a>
                   </div>
                 </div>
@@ -961,25 +1069,6 @@ def dashboard(request):
             </div>
           </main>
         </div>
-        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-        <script>
-          const buildDonut = (canvasId, value, color) => {{
-            const ctx = document.getElementById(canvasId);
-            if (!ctx) return;
-            new Chart(ctx, {{
-              type: "doughnut",
-              data: {{
-                labels: ["Valor", "Restante"],
-                datasets: [{{ data: [value, 100 - value], backgroundColor: [color, "#e5e7eb"] }}],
-              }},
-              options: {{ plugins: {{ legend: {{ display: false }} }}, cutout: "72%" }},
-            }});
-          }};
-          buildDonut("openChart", {open_rate}, "#1877f2");
-          buildDonut("ctaChart", {cta_rate}, "#ff5c8d");
-          buildDonut("submitChart", {submit_rate}, "#f7b928");
-          buildDonut("reportChart", {report_rate}, "#31a24c");
-        </script>
       </body>
     </html>
     """
