@@ -486,69 +486,75 @@ def dashboard(request):
           .shell {{
             min-height: 100vh;
             display: flex;
-            border: 1px solid #27272a;
-            margin: 16px;
+            border: 1px solid #2a2a2a;
+            margin: 12px;
           }}
           .sidebar {{
-            width: 72px;
-            background: #101216;
-            border-right: 1px solid #23252b;
-            padding: 20px 12px;
+            width: 56px;
+            background: #0f0f10;
+            border-right: 1px solid #2a2a2a;
+            padding: 16px 10px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 20px;
+            gap: 16px;
           }}
           .brand {{
-            width: 36px;
-            height: 36px;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
-            border: 1px solid #d4d4d8;
-            color: #d4d4d8;
+            border: 1px solid #f8fafc;
+            color: #f8fafc;
             font-weight: 700;
             display: flex;
             align-items: center;
             justify-content: center;
+            font-size: 12px;
           }}
           .nav {{
             display: grid;
-            gap: 14px;
+            gap: 12px;
           }}
           .nav-item {{
-            width: 32px;
-            height: 32px;
+            width: 26px;
+            height: 26px;
             border-radius: 50%;
-            border: 1px solid #27272a;
+            border: 1px solid #f8fafc;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 18px;
+            font-size: 16px;
             color: #f8fafc;
             background: transparent;
           }}
           .nav-item.active {{
-            border-color: #f8fafc;
+            border-color: #2563eb;
+          }}
+          .nav-bottom {{
+            margin-top: auto;
+            display: grid;
+            gap: 12px;
           }}
           .content {{
             flex: 1;
-            padding: 26px 30px 36px;
+            padding: 22px 28px 32px;
           }}
           .page-header {{
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 20px;
-            margin-bottom: 18px;
+            margin-bottom: 16px;
           }}
           .page-header h1 {{
             margin: 0;
-            font-size: 20px;
+            font-size: 18px;
             color: #f8fafc;
             letter-spacing: 0.2px;
           }}
           .page-header p {{
             margin: 6px 0 0;
-            font-size: 12px;
+            font-size: 11px;
             color: #9ca3af;
           }}
           .header-actions {{
@@ -559,28 +565,28 @@ def dashboard(request):
           .chip {{
             padding: 6px 12px;
             border-radius: 999px;
-            background: #111827;
-            border: 1px solid #374151;
+            background: #0f0f10;
+            border: 1px solid #2a2a2a;
             color: #f8fafc;
             font-weight: 600;
             font-size: 11px;
           }}
           .chip.ghost {{
             background: transparent;
-            border-color: #374151;
+            border-color: #2a2a2a;
             color: #e5e7eb;
           }}
           .content-grid {{
             display: grid;
-            grid-template-columns: 300px 1fr;
+            grid-template-columns: 280px 1fr;
             gap: 18px;
           }}
           .panel {{
-            background: #12141a;
-            border: 1px solid #2c2f36;
+            background: #111214;
+            border: 1px solid #2a2a2a;
             border-radius: 14px;
             padding: 16px;
-            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
           }}
           .campaigns-panel {{
             display: flex;
@@ -590,7 +596,7 @@ def dashboard(request):
           .panel-header {{
             font-size: 12px;
             font-weight: 600;
-            color: #d1d5db;
+            color: #f8fafc;
           }}
           .search-input {{
             display: flex;
@@ -598,8 +604,8 @@ def dashboard(request):
             gap: 8px;
             padding: 8px 10px;
             border-radius: 10px;
-            border: 1px solid #2c2f36;
-            background: #0f1115;
+            border: 1px solid #2a2a2a;
+            background: #0b0b0c;
           }}
           .search-input input {{
             border: none;
@@ -613,7 +619,7 @@ def dashboard(request):
             border: none;
             background: transparent;
             font-size: 16px;
-            color: #d1d5db;
+            color: #f8fafc;
             cursor: pointer;
           }}
           .campaign-list {{
@@ -629,17 +635,17 @@ def dashboard(request):
             border: 1px solid transparent;
             text-decoration: none;
             color: inherit;
-            background: #0f1115;
+            background: #0b0b0c;
           }}
           .campaign-item.active {{
-            border-color: #f8fafc;
-            background: #151821;
+            border-color: #2563eb;
+            background: #12151b;
           }}
           .campaign-icon {{
             width: 32px;
             height: 32px;
             border-radius: 10px;
-            background: #1f2937;
+            background: #111318;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -670,7 +676,7 @@ def dashboard(request):
           }}
           .detail-main {{
             display: grid;
-            grid-template-columns: 2fr 1fr;
+            grid-template-columns: 2.2fr 1fr;
             gap: 16px;
             align-items: center;
             margin-bottom: 18px;
@@ -679,12 +685,12 @@ def dashboard(request):
             text-align: center;
             padding: 14px;
             border-radius: 16px;
-            border: 1px solid #2c2f36;
-            background: #0f1115;
+            border: 1px solid #2a2a2a;
+            background: #0b0b0c;
           }}
           .donut-title {{
             font-size: 11px;
-            color: #9ca3af;
+            color: #e5e7eb;
             text-transform: uppercase;
             letter-spacing: 0.6px;
           }}
@@ -712,14 +718,14 @@ def dashboard(request):
             text-align: center;
             padding: 10px;
             border-radius: 12px;
-            border: 1px solid #2c2f36;
-            background: #0f1115;
+            border: 1px solid #2a2a2a;
+            background: #0b0b0c;
             text-decoration: none;
             color: inherit;
             transition: border-color 0.2s ease, transform 0.2s ease;
           }}
           .mini-donut.active {{
-            border-color: #f8fafc;
+            border-color: #2563eb;
             transform: translateY(-1px);
           }}
           .mini-donut canvas {{
@@ -728,7 +734,7 @@ def dashboard(request):
           }}
           .mini-label {{
             font-size: 11px;
-            color: #d1d5db;
+            color: #f8fafc;
             margin-top: 4px;
             display: block;
           }}
@@ -739,7 +745,7 @@ def dashboard(request):
           .detail-table h4 {{
             margin: 0 0 8px;
             font-size: 12px;
-            color: #e5e7eb;
+            color: #f8fafc;
             text-transform: uppercase;
             letter-spacing: 0.4px;
           }}
@@ -752,28 +758,31 @@ def dashboard(request):
           .detail-table td {{
             text-align: left;
             padding: 8px 6px;
-            border-bottom: 1px solid #2c2f36;
+            border-bottom: 1px solid #2a2a2a;
           }}
           .detail-table th {{
-            color: #d1d5db;
+            color: #f8fafc;
             font-weight: 600;
             font-size: 10px;
             text-transform: uppercase;
             letter-spacing: 0.4px;
           }}
           .muted {{
-            color: #6b7280;
+            color: #9ca3af;
             font-size: 11px;
           }}
           .icon {{
             width: 18px;
             height: 18px;
-            stroke: #e5e7eb;
+            stroke: #f8fafc;
             stroke-width: 1.7;
             fill: none;
           }}
           .icon-muted {{
-            stroke: #e5e7eb;
+            stroke: #f8fafc;
+          }}
+          .nav-item.active .icon-muted {{
+            stroke: #2563eb;
           }}
         </style>
       </head>
@@ -804,11 +813,13 @@ def dashboard(request):
                 </svg>
               </div>
             </div>
-            <div class="nav-item">
-              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="12" cy="12" r="3.5"></circle>
-                <path d="M19 12l2-1-2-1-1-2 1-2-2-1-1-2-2 1-2-1-2 1-2-1-2 1 1 2-1 2 1 2-1 2 2 1 1 2 2-1 2 1 2-1 2 1 1-2 2-1-1-2 1-2z"></path>
-              </svg>
+            <div class="nav-bottom">
+              <div class="nav-item">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <circle cx="12" cy="12" r="3.5"></circle>
+                  <path d="M19 12l2-1-2-1-1-2 1-2-2-1-1-2-2 1-2-1-2 1-2-1-2 1 1 2-1 2 1 2-1 2 2 1 1 2 2-1 2 1 2-1 2 1 1-2 2-1-1-2 1-2z"></path>
+                </svg>
+              </div>
             </div>
           </aside>
           <main class="content">
@@ -917,11 +928,11 @@ def dashboard(request):
               options: {{ plugins: {{ legend: {{ display: false }} }}, cutout: "72%" }},
             }});
           }};
-          buildDonut("openChart", {open_rate}, "#f8fafc");
-          buildDonut("ctaChart", {cta_rate}, "#e5e7eb");
-          buildDonut("submitChart", {submit_rate}, "#d1d5db");
-          buildDonut("reportChart", {report_rate}, "#9ca3af");
-          buildDonut("openedChart", {open_rate}, "#f9fafb");
+          buildDonut("openChart", {open_rate}, "#2563eb");
+          buildDonut("ctaChart", {cta_rate}, "#2563eb");
+          buildDonut("submitChart", {submit_rate}, "#2563eb");
+          buildDonut("reportChart", {report_rate}, "#2563eb");
+          buildDonut("openedChart", {open_rate}, "#2563eb");
         </script>
       </body>
     </html>
