@@ -519,6 +519,8 @@ def dashboard(request):
             bottom: 12px;
             left: 14px;
             z-index: 2;
+            border-radius: 14px;
+            box-shadow: 0 6px 16px rgba(16, 24, 40, 0.08);
           }}
           .brand {{
             width: 24px;
@@ -616,6 +618,12 @@ def dashboard(request):
             padding: 16px;
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
           }}
+          .detail-panel {{
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            max-height: calc(100vh - 160px);
+          }}
           .campaigns-panel {{
             display: flex;
             flex-direction: column;
@@ -704,6 +712,7 @@ def dashboard(request):
             align-items: flex-start;
             justify-content: space-between;
             margin-bottom: 16px;
+            padding: 16px 16px 0;
           }}
           .detail-title {{
             font-size: 16px;
@@ -739,6 +748,16 @@ def dashboard(request):
             font-size: 11px;
             font-weight: 600;
             color: #1c1e21;
+            padding: 8px 16px 12px;
+            margin: 0;
+            background: #ffffff;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+          }}
+          .detail-body {{
+            padding: 0 16px 16px;
+            overflow: auto;
           }}
           .detail-tabs .tab {{
             padding: 2px 12px;
@@ -968,102 +987,104 @@ def dashboard(request):
                   <span class="tab">Item2</span>
                   <span class="tab">Item3</span>
                 </div>
-                <div class="detail-main">
-                  <div class="summary-card">
-                    <div class="ring-chart" aria-hidden="true">
-                      <svg viewBox="0 0 120 120">
-                        <circle class="ring-bg" cx="60" cy="60" r="52"></circle>
-                        <circle class="ring-inner" cx="60" cy="60" r="34"></circle>
-                        <circle class="ring-progress"
-                                cx="60"
-                                cy="60"
-                                r="{big_radius}"
-                                stroke-dasharray="{big_circ:.2f}"
-                                stroke-dashoffset="{big_open_offset:.2f}"></circle>
-                      </svg>
+                <div class="detail-body">
+                  <div class="detail-main">
+                    <div class="summary-card">
+                      <div class="ring-chart" aria-hidden="true">
+                        <svg viewBox="0 0 120 120">
+                          <circle class="ring-bg" cx="60" cy="60" r="52"></circle>
+                          <circle class="ring-inner" cx="60" cy="60" r="34"></circle>
+                          <circle class="ring-progress"
+                                  cx="60"
+                                  cy="60"
+                                  r="{big_radius}"
+                                  stroke-dasharray="{big_circ:.2f}"
+                                  stroke-dashoffset="{big_open_offset:.2f}"></circle>
+                        </svg>
+                      </div>
+                      <div class="summary-meta">
+                        <div class="summary-rate">{open_rate}%</div>
+                        <div class="summary-label">Abrieron el correo</div>
+                        <div class="summary-sub">Índice de apertura sobre enviados.</div>
+                      </div>
                     </div>
-                    <div class="summary-meta">
-                      <div class="summary-rate">{open_rate}%</div>
-                      <div class="summary-label">Abrieron el correo</div>
-                      <div class="summary-sub">Índice de apertura sobre enviados.</div>
+                    <div class="mini-metrics">
+                      <a class="mini-donut {'active' if selected_metric == 'cta' else ''}"
+                         href="?{escape(urlencode({'campaign': selected_campaign_id or '', 'q': search_term, 'metric': 'cta'}))}">
+                        <div class="mini-ring" aria-hidden="true">
+                          <svg viewBox="0 0 60 60">
+                            <circle class="ring-bg" cx="30" cy="30" r="24"></circle>
+                            <circle class="ring-inner" cx="30" cy="30" r="16"></circle>
+                            <circle class="ring-progress cta"
+                                    cx="30"
+                                    cy="30"
+                                    r="{small_radius}"
+                                    stroke-dasharray="{small_circ:.2f}"
+                                    stroke-dashoffset="{small_cta_offset:.2f}"></circle>
+                          </svg>
+                        </div>
+                        <div>
+                          <span class="mini-title"><span class="mini-value">{cta_rate}%</span>Click CTA</span>
+                          <div class="mini-sub">{totals["cta"]} usuarios</div>
+                        </div>
+                      </a>
+                      <a class="mini-donut {'active' if selected_metric == 'submit' else ''}"
+                         href="?{escape(urlencode({'campaign': selected_campaign_id or '', 'q': search_term, 'metric': 'submit'}))}">
+                        <div class="mini-ring" aria-hidden="true">
+                          <svg viewBox="0 0 60 60">
+                            <circle class="ring-bg" cx="30" cy="30" r="24"></circle>
+                            <circle class="ring-inner" cx="30" cy="30" r="16"></circle>
+                            <circle class="ring-progress submit"
+                                    cx="30"
+                                    cy="30"
+                                    r="{small_radius}"
+                                    stroke-dasharray="{small_circ:.2f}"
+                                    stroke-dashoffset="{small_submit_offset:.2f}"></circle>
+                          </svg>
+                        </div>
+                        <div>
+                          <span class="mini-title"><span class="mini-value">{submit_rate}%</span>Submited Data</span>
+                          <div class="mini-sub">{totals["submit"]} usuarios</div>
+                        </div>
+                      </a>
+                      <a class="mini-donut {'active' if selected_metric == 'reported' else ''}"
+                         href="?{escape(urlencode({'campaign': selected_campaign_id or '', 'q': search_term, 'metric': 'reported'}))}">
+                        <div class="mini-ring" aria-hidden="true">
+                          <svg viewBox="0 0 60 60">
+                            <circle class="ring-bg" cx="30" cy="30" r="24"></circle>
+                            <circle class="ring-inner" cx="30" cy="30" r="16"></circle>
+                            <circle class="ring-progress report"
+                                    cx="30"
+                                    cy="30"
+                                    r="{small_radius}"
+                                    stroke-dasharray="{small_circ:.2f}"
+                                    stroke-dashoffset="{small_report_offset:.2f}"></circle>
+                          </svg>
+                        </div>
+                        <div>
+                          <span class="mini-title"><span class="mini-value">{report_rate}%</span>Report</span>
+                          <div class="mini-sub">{totals["reported"]} usuarios</div>
+                        </div>
+                      </a>
                     </div>
                   </div>
-                  <div class="mini-metrics">
-                    <a class="mini-donut {'active' if selected_metric == 'cta' else ''}"
-                       href="?{escape(urlencode({'campaign': selected_campaign_id or '', 'q': search_term, 'metric': 'cta'}))}">
-                      <div class="mini-ring" aria-hidden="true">
-                        <svg viewBox="0 0 60 60">
-                          <circle class="ring-bg" cx="30" cy="30" r="24"></circle>
-                          <circle class="ring-inner" cx="30" cy="30" r="16"></circle>
-                          <circle class="ring-progress cta"
-                                  cx="30"
-                                  cy="30"
-                                  r="{small_radius}"
-                                  stroke-dasharray="{small_circ:.2f}"
-                                  stroke-dashoffset="{small_cta_offset:.2f}"></circle>
-                        </svg>
-                      </div>
-                      <div>
-                        <span class="mini-title"><span class="mini-value">{cta_rate}%</span>Click CTA</span>
-                        <div class="mini-sub">{totals["cta"]} usuarios</div>
-                      </div>
-                    </a>
-                    <a class="mini-donut {'active' if selected_metric == 'submit' else ''}"
-                       href="?{escape(urlencode({'campaign': selected_campaign_id or '', 'q': search_term, 'metric': 'submit'}))}">
-                      <div class="mini-ring" aria-hidden="true">
-                        <svg viewBox="0 0 60 60">
-                          <circle class="ring-bg" cx="30" cy="30" r="24"></circle>
-                          <circle class="ring-inner" cx="30" cy="30" r="16"></circle>
-                          <circle class="ring-progress submit"
-                                  cx="30"
-                                  cy="30"
-                                  r="{small_radius}"
-                                  stroke-dasharray="{small_circ:.2f}"
-                                  stroke-dashoffset="{small_submit_offset:.2f}"></circle>
-                        </svg>
-                      </div>
-                      <div>
-                        <span class="mini-title"><span class="mini-value">{submit_rate}%</span>Submited Data</span>
-                        <div class="mini-sub">{totals["submit"]} usuarios</div>
-                      </div>
-                    </a>
-                    <a class="mini-donut {'active' if selected_metric == 'reported' else ''}"
-                       href="?{escape(urlencode({'campaign': selected_campaign_id or '', 'q': search_term, 'metric': 'reported'}))}">
-                      <div class="mini-ring" aria-hidden="true">
-                        <svg viewBox="0 0 60 60">
-                          <circle class="ring-bg" cx="30" cy="30" r="24"></circle>
-                          <circle class="ring-inner" cx="30" cy="30" r="16"></circle>
-                          <circle class="ring-progress report"
-                                  cx="30"
-                                  cy="30"
-                                  r="{small_radius}"
-                                  stroke-dasharray="{small_circ:.2f}"
-                                  stroke-dashoffset="{small_report_offset:.2f}"></circle>
-                        </svg>
-                      </div>
-                      <div>
-                        <span class="mini-title"><span class="mini-value">{report_rate}%</span>Report</span>
-                        <div class="mini-sub">{totals["reported"]} usuarios</div>
-                      </div>
-                    </a>
+                  <div class="detail-table">
+                    <h4>Detalle por usuario</h4>
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Nombre</th>
+                          <th>Área</th>
+                          <th>Fecha</th>
+                          <th>Dispositivo</th>
+                          <th>Estado</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {recipient_rows if recipient_rows else '<tr><td colspan="5" class="muted">Sin registros para mostrar.</td></tr>'}
+                      </tbody>
+                    </table>
                   </div>
-                </div>
-                <div class="detail-table">
-                  <h4>Detalle por usuario</h4>
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Nombre</th>
-                        <th>Área</th>
-                        <th>Fecha</th>
-                        <th>Dispositivo</th>
-                        <th>Estado</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {recipient_rows if recipient_rows else '<tr><td colspan="5" class="muted">Sin registros para mostrar.</td></tr>'}
-                    </tbody>
-                  </table>
                 </div>
               </section>
             </div>
