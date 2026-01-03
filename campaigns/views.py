@@ -498,7 +498,12 @@ def dashboard(request):
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 16px;
+            gap: 18px;
+            position: fixed;
+            top: 12px;
+            bottom: 12px;
+            left: 14px;
+            z-index: 2;
           }}
           .brand {{
             width: 24px;
@@ -561,14 +566,10 @@ def dashboard(request):
             background: #bfdbfe;
             border-color: #60a5fa;
           }}
-          .nav-bottom {{
-            margin-top: auto;
-            display: grid;
-            gap: 12px;
-          }}
           .content {{
             flex: 1;
             padding: 22px 26px 30px;
+            margin-left: 84px;
           }}
           .page-header {{
             display: flex;
@@ -587,25 +588,6 @@ def dashboard(request):
             margin: 6px 0 0;
             font-size: 11px;
             color: #6b7280;
-          }}
-          .header-actions {{
-            display: flex;
-            gap: 10px;
-            align-items: center;
-          }}
-          .chip {{
-            padding: 6px 12px;
-            border-radius: 999px;
-            background: #e0f2fe;
-            border: 1px solid #1d4ed8;
-            color: #111827;
-            font-weight: 600;
-            font-size: 11px;
-          }}
-          .chip.ghost {{
-            background: #ffffff;
-            border-color: #111827;
-            color: #111827;
           }}
           .content-grid {{
             display: grid;
@@ -659,6 +641,7 @@ def dashboard(request):
             gap: 12px;
           }}
           .campaign-item {{
+            position: relative;
             display: flex;
             gap: 12px;
             padding: 10px;
@@ -671,6 +654,16 @@ def dashboard(request):
           .campaign-item.active {{
             border-color: #1d4ed8;
             background: #e0f2fe;
+          }}
+          .campaign-item.active::before {{
+            content: "";
+            position: absolute;
+            left: -2px;
+            top: 10px;
+            bottom: 10px;
+            width: 6px;
+            border-radius: 6px;
+            background: #1d4ed8;
           }}
           .campaign-icon {{
             width: 32px;
@@ -708,7 +701,7 @@ def dashboard(request):
           }}
           .detail-tabs {{
             display: flex;
-            gap: 18px;
+            gap: 16px;
             align-items: center;
             border-bottom: 2px solid #111827;
             padding-bottom: 6px;
@@ -718,12 +711,13 @@ def dashboard(request):
             color: #111827;
           }}
           .detail-tabs .tab {{
-            padding: 2px 10px;
+            padding: 2px 12px;
             border-radius: 4px;
+            border: 2px solid transparent;
           }}
           .detail-tabs .tab.active {{
-            background: #93c5fd;
-            border: 2px solid #1d4ed8;
+            background: #e0f2fe;
+            border-color: #1d4ed8;
           }}
           .detail-main {{
             display: grid;
@@ -866,10 +860,6 @@ def dashboard(request):
                 <h1>Campañas de phishing</h1>
                 <p>Administración de campañas y métricas clave en tiempo real.</p>
               </div>
-              <div class="header-actions">
-                <div class="chip">Resumen</div>
-                <div class="chip ghost">{escape(selected_campaign_name)}</div>
-              </div>
             </header>
             <div class="content-grid">
               <section class="panel campaigns-panel">
@@ -895,7 +885,13 @@ def dashboard(request):
                     <div class="detail-title">{escape(selected_campaign_name)}</div>
                     <div class="detail-sub">Total enviados: {totals["sent"]}</div>
                   </div>
-                  <div class="chip ghost">Por usuario</div>
+                </div>
+                <div class="detail-tabs">
+                  <span class="tab active">Resumen</span>
+                  <span class="tab">Por Usuario</span>
+                  <span class="tab">Item2</span>
+                  <span class="tab">Item2</span>
+                  <span class="tab">Item3</span>
                 </div>
                 <div class="detail-tabs">
                   <span class="tab active">Resumen</span>
