@@ -1137,6 +1137,59 @@ def dashboard_v2(request):
     total_recipients = (
         CampaignRecipient.objects.filter(campaign=selected_campaign).count() if selected_campaign else 0
     )
+    sent_count = 0
+    opened_count = 0
+    cta_count = 0
+    submit_count = 0
+    report_count = 0
+    recipient_rows = []
+    if selected_campaign:
+        recipients = (
+            CampaignRecipient.objects.filter(campaign=selected_campaign)
+            .select_related("recipient")
+            .order_by("-created_at")
+        )
+        sent_count = recipients.filter(
+            models.Q(sent_at__isnull=False) | models.Q(status=CampaignRecipient.Status.SENT)
+        ).count()
+        opened_count = recipients.filter(
+            models.Q(opened_at__isnull=False) | models.Q(open_seen_at__isnull=False)
+        ).count()
+        cta_count = recipients.filter(cta_click_count__gt=0).count()
+        submit_count = recipients.filter(submit_attempted=True).count()
+        report_count = recipients.filter(reported_at__isnull=False).count()
+        for item in recipients:
+            recipient = item.recipient
+            full_name = (
+                recipient.full_name
+                or " ".join(
+                    part
+                    for part in [
+                        recipient.first_name,
+                        recipient.last_name_paternal,
+                        recipient.last_name_maternal,
+                    ]
+                    if part
+                ).strip()
+                or recipient.email
+            )
+            recipient_rows.append(
+                {
+                    "name": full_name,
+                    "area": recipient.area or recipient.department or "--",
+                    "role": recipient.role or "--",
+                    "opened": item.opened_at is not None or item.open_seen_at is not None,
+                    "cta": item.cta_click_count > 0,
+                    "submit": item.submit_attempted,
+                    "report": item.reported_at is not None,
+                }
+            )
+
+    total_for_rates = total_recipients or 1
+    open_rate = int((opened_count / total_for_rates) * 100)
+    cta_rate = int((cta_count / total_for_rates) * 100)
+    submit_rate = int((submit_count / total_for_rates) * 100)
+    report_rate = int((report_count / total_for_rates) * 100)
 
     context = {
         "campaign_list": campaign_list,
@@ -1145,5 +1198,12 @@ def dashboard_v2(request):
         "selected_campaign_date": selected_campaign_date,
         "total_recipients": total_recipients,
         "query": query,
+        "sent_count": sent_count,
+        "opened_count": opened_count,
+        "open_rate": open_rate,
+        "cta_rate": cta_rate,
+        "submit_rate": submit_rate,
+        "report_rate": report_rate,
+        "recipient_rows": recipient_rows,
     }
     return render(request, "campaigns/dashboard_v2.html", context)
