@@ -1152,6 +1152,11 @@ def dashboard_v2(request):
             font-weight: 700;
             color: #2563eb;
             font-size: 16px;
+            width: 100%;
+            justify-content: center;
+          }
+          .sidebar.expanded .brand {
+            justify-content: flex-start;
           }
           .brand-icon {
             width: 34px;
@@ -1162,16 +1167,32 @@ def dashboard_v2(request):
             place-items: center;
             font-size: 16px;
           }
-          .toggle {
+          .footer-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            border-radius: 999px;
+            border: 1px solid #e5e7eb;
+            background: #ffffff;
+            color: #6b7280;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+          }
+          .footer-item svg {
+            width: 18px;
+            height: 18px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 1.8;
+          }
+          .sidebar:not(.expanded) .footer-item {
+            justify-content: center;
+            padding: 8px 0;
             width: 32px;
             height: 32px;
-            border-radius: 10px;
-            border: 1px solid #e5e7eb;
-            background: #f9fafb;
-            cursor: pointer;
-            display: grid;
-            place-items: center;
-            color: #111827;
           }
           .nav {
             display: flex;
@@ -1235,14 +1256,11 @@ def dashboard_v2(request):
           .sidebar:not(.expanded) .nav-footer {
             align-items: center;
           }
-          .nav-dot {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            border: 1px solid #e5e7eb;
-            display: grid;
-            place-items: center;
-            color: #6b7280;
+          .footer-label {
+            white-space: nowrap;
+          }
+          .sidebar:not(.expanded) .footer-label {
+            display: none;
           }
           .main {
             flex: 1;
@@ -1343,7 +1361,6 @@ def dashboard_v2(request):
               <div class="brand-icon">∞</div>
               <span>Security</span>
             </div>
-            <button class="toggle" id="toggle" aria-label="Expandir menú">☰</button>
             <nav class="nav">
               <a class="nav-item active" data-title="Campañas" href="#">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -1377,9 +1394,35 @@ def dashboard_v2(request):
               </a>
             </nav>
             <div class="nav-footer">
-              <div class="nav-dot">?</div>
-              <div class="nav-dot">⚙</div>
-              <div class="nav-dot">⏻</div>
+              <button class="footer-item" id="toggle" aria-label="Expandir o contraer menú" type="button">
+                <svg viewBox="0 0 24 24" aria-hidden="true" class="toggle-icon">
+                  <path d="M9 6l6 6-6 6"></path>
+                </svg>
+                <span class="footer-label">Contraer</span>
+              </button>
+              <a class="footer-item" href="#">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 3v2"></path>
+                  <path d="M12 19v2"></path>
+                  <path d="M4.9 4.9l1.4 1.4"></path>
+                  <path d="M17.7 17.7l1.4 1.4"></path>
+                  <path d="M3 12h2"></path>
+                  <path d="M19 12h2"></path>
+                  <path d="M4.9 19.1l1.4-1.4"></path>
+                  <path d="M17.7 6.3l1.4-1.4"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                <span class="footer-label">Configuración</span>
+              </a>
+              <a class="footer-item" href="#">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M9 6v-1a2 2 0 0 1 2-2h6"></path>
+                  <path d="M15 6h4v12h-4"></path>
+                  <path d="M10 12h9"></path>
+                  <path d="M7 9l-3 3 3 3"></path>
+                </svg>
+                <span class="footer-label">Cerrar sesión</span>
+              </a>
             </div>
           </aside>
 
@@ -1413,9 +1456,21 @@ def dashboard_v2(request):
           const toggle = document.getElementById("toggle");
           const headerTitle = document.getElementById("headerTitle");
           const items = document.querySelectorAll(".nav-item");
+          const toggleIcon = toggle.querySelector(".toggle-icon");
+          const toggleLabel = toggle.querySelector(".footer-label");
+
+          const setToggleState = (isExpanded) => {
+            toggleIcon.innerHTML = isExpanded
+              ? '<path d="M15 6l-6 6 6 6"></path>'
+              : '<path d="M9 6l6 6-6 6"></path>';
+            toggleLabel.textContent = isExpanded ? "Contraer" : "Expandir";
+          };
+
+          setToggleState(true);
 
           toggle.addEventListener("click", () => {
-            sidebar.classList.toggle("expanded");
+            const isExpanded = sidebar.classList.toggle("expanded");
+            setToggleState(isExpanded);
           });
 
           items.forEach((item) => {
