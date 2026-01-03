@@ -480,19 +480,20 @@ def dashboard(request):
           body {{
             margin: 0;
             font-family: "Inter", "Segoe UI", sans-serif;
-            background: #0c0d10;
-            color: #e2e8f0;
+            background: #f4f5f7;
+            color: #0f172a;
           }}
           .shell {{
             min-height: 100vh;
             display: flex;
-            border: 1px solid #2a2a2a;
-            margin: 12px;
+            border: 2px solid #111827;
+            margin: 12px 14px;
+            background: #ffffff;
           }}
           .sidebar {{
-            width: 56px;
-            background: #0f0f10;
-            border-right: 1px solid #2a2a2a;
+            width: 64px;
+            background: #ffffff;
+            border-right: 2px solid #111827;
             padding: 16px 10px;
             display: flex;
             flex-direction: column;
@@ -500,11 +501,11 @@ def dashboard(request):
             gap: 16px;
           }}
           .brand {{
-            width: 28px;
-            height: 28px;
+            width: 24px;
+            height: 24px;
             border-radius: 50%;
-            border: 1px solid #f8fafc;
-            color: #f8fafc;
+            border: 2px solid #111827;
+            color: #111827;
             font-weight: 700;
             display: flex;
             align-items: center;
@@ -513,22 +514,52 @@ def dashboard(request):
           }}
           .nav {{
             display: grid;
-            gap: 12px;
+            gap: 14px;
           }}
           .nav-item {{
-            width: 26px;
-            height: 26px;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
-            border: 1px solid #f8fafc;
+            border: 2px solid #111827;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 16px;
-            color: #f8fafc;
-            background: transparent;
+            color: #111827;
+            background: #ffffff;
           }}
           .nav-item.active {{
-            border-color: #2563eb;
+            border-color: #1d4ed8;
+            background: #e0f2fe;
+          }}
+          .nav-bottom {{
+            margin-top: auto;
+            display: grid;
+            gap: 12px;
+          }}
+          .nav-dot {{
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: inline-block;
+            border: 2px solid #111827;
+            background: #ffffff;
+          }}
+          .nav-dot.blue {{
+            background: #e0f2fe;
+            border-color: #1d4ed8;
+          }}
+          .nav-dot.yellow {{
+            background: #fde68a;
+            border-color: #f59e0b;
+          }}
+          .nav-dot.orange {{
+            background: #fbbf24;
+            border-color: #d97706;
+          }}
+          .nav-dot.sky {{
+            background: #bfdbfe;
+            border-color: #60a5fa;
           }}
           .nav-bottom {{
             margin-top: auto;
@@ -537,25 +568,25 @@ def dashboard(request):
           }}
           .content {{
             flex: 1;
-            padding: 22px 28px 32px;
+            padding: 22px 26px 30px;
           }}
           .page-header {{
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 20px;
-            margin-bottom: 16px;
+            margin-bottom: 14px;
           }}
           .page-header h1 {{
             margin: 0;
             font-size: 18px;
-            color: #f8fafc;
+            color: #111827;
             letter-spacing: 0.2px;
           }}
           .page-header p {{
             margin: 6px 0 0;
             font-size: 11px;
-            color: #9ca3af;
+            color: #6b7280;
           }}
           .header-actions {{
             display: flex;
@@ -565,28 +596,28 @@ def dashboard(request):
           .chip {{
             padding: 6px 12px;
             border-radius: 999px;
-            background: #0f0f10;
-            border: 1px solid #2a2a2a;
-            color: #f8fafc;
+            background: #e0f2fe;
+            border: 1px solid #1d4ed8;
+            color: #111827;
             font-weight: 600;
             font-size: 11px;
           }}
           .chip.ghost {{
-            background: transparent;
-            border-color: #2a2a2a;
-            color: #e5e7eb;
+            background: #ffffff;
+            border-color: #111827;
+            color: #111827;
           }}
           .content-grid {{
             display: grid;
-            grid-template-columns: 280px 1fr;
-            gap: 18px;
+            grid-template-columns: 260px 1fr;
+            gap: 14px;
           }}
           .panel {{
-            background: #111214;
-            border: 1px solid #2a2a2a;
+            background: #ffffff;
+            border: 2px solid #111827;
             border-radius: 14px;
             padding: 16px;
-            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+            box-shadow: none;
           }}
           .campaigns-panel {{
             display: flex;
@@ -596,7 +627,7 @@ def dashboard(request):
           .panel-header {{
             font-size: 12px;
             font-weight: 600;
-            color: #f8fafc;
+            color: #111827;
           }}
           .search-input {{
             display: flex;
@@ -604,8 +635,8 @@ def dashboard(request):
             gap: 8px;
             padding: 8px 10px;
             border-radius: 10px;
-            border: 1px solid #2a2a2a;
-            background: #0b0b0c;
+            border: 2px solid #111827;
+            background: #ffffff;
           }}
           .search-input input {{
             border: none;
@@ -619,7 +650,7 @@ def dashboard(request):
             border: none;
             background: transparent;
             font-size: 16px;
-            color: #f8fafc;
+            color: #111827;
             cursor: pointer;
           }}
           .campaign-list {{
@@ -632,20 +663,21 @@ def dashboard(request):
             gap: 12px;
             padding: 10px;
             border-radius: 12px;
-            border: 1px solid transparent;
+            border: 2px solid #111827;
             text-decoration: none;
             color: inherit;
-            background: #0b0b0c;
+            background: #ffffff;
           }}
           .campaign-item.active {{
-            border-color: #2563eb;
-            background: #12151b;
+            border-color: #1d4ed8;
+            background: #e0f2fe;
           }}
           .campaign-icon {{
             width: 32px;
             height: 32px;
-            border-radius: 10px;
-            background: #111318;
+            border-radius: 8px;
+            border: 2px solid #111827;
+            background: #ffffff;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -668,15 +700,34 @@ def dashboard(request):
           .detail-title {{
             font-size: 16px;
             font-weight: 700;
-            color: #f8fafc;
+            color: #111827;
           }}
           .detail-sub {{
             font-size: 12px;
-            color: #9ca3af;
+            color: #6b7280;
+          }}
+          .detail-tabs {{
+            display: flex;
+            gap: 18px;
+            align-items: center;
+            border-bottom: 2px solid #111827;
+            padding-bottom: 6px;
+            margin: 10px 0 12px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #111827;
+          }}
+          .detail-tabs .tab {{
+            padding: 2px 10px;
+            border-radius: 4px;
+          }}
+          .detail-tabs .tab.active {{
+            background: #93c5fd;
+            border: 2px solid #1d4ed8;
           }}
           .detail-main {{
             display: grid;
-            grid-template-columns: 2.2fr 1fr;
+            grid-template-columns: 2fr 1fr;
             gap: 16px;
             align-items: center;
             margin-bottom: 18px;
@@ -685,12 +736,12 @@ def dashboard(request):
             text-align: center;
             padding: 14px;
             border-radius: 16px;
-            border: 1px solid #2a2a2a;
-            background: #0b0b0c;
+            border: 2px solid #111827;
+            background: #ffffff;
           }}
           .donut-title {{
             font-size: 11px;
-            color: #e5e7eb;
+            color: #111827;
             text-transform: uppercase;
             letter-spacing: 0.6px;
           }}
@@ -701,7 +752,7 @@ def dashboard(request):
           }}
           .donut-label {{
             font-size: 11px;
-            color: #9ca3af;
+            color: #6b7280;
             margin-top: 6px;
           }}
           .donut-canvas {{
@@ -718,14 +769,14 @@ def dashboard(request):
             text-align: center;
             padding: 10px;
             border-radius: 12px;
-            border: 1px solid #2a2a2a;
-            background: #0b0b0c;
+            border: 2px solid #111827;
+            background: #ffffff;
             text-decoration: none;
             color: inherit;
             transition: border-color 0.2s ease, transform 0.2s ease;
           }}
           .mini-donut.active {{
-            border-color: #2563eb;
+            border-color: #1d4ed8;
             transform: translateY(-1px);
           }}
           .mini-donut canvas {{
@@ -734,18 +785,18 @@ def dashboard(request):
           }}
           .mini-label {{
             font-size: 11px;
-            color: #f8fafc;
+            color: #111827;
             margin-top: 4px;
             display: block;
           }}
           .mini-value {{
             font-size: 10px;
-            color: #9ca3af;
+            color: #6b7280;
           }}
           .detail-table h4 {{
             margin: 0 0 8px;
             font-size: 12px;
-            color: #f8fafc;
+            color: #111827;
             text-transform: uppercase;
             letter-spacing: 0.4px;
           }}
@@ -758,67 +809,54 @@ def dashboard(request):
           .detail-table td {{
             text-align: left;
             padding: 8px 6px;
-            border-bottom: 1px solid #2a2a2a;
+            border-bottom: 1px solid #111827;
           }}
           .detail-table th {{
-            color: #f8fafc;
+            color: #111827;
             font-weight: 600;
             font-size: 10px;
             text-transform: uppercase;
             letter-spacing: 0.4px;
           }}
           .muted {{
-            color: #9ca3af;
+            color: #6b7280;
             font-size: 11px;
           }}
           .icon {{
             width: 18px;
             height: 18px;
-            stroke: #f8fafc;
+            stroke: #111827;
             stroke-width: 1.7;
             fill: none;
           }}
           .icon-muted {{
-            stroke: #f8fafc;
+            stroke: #111827;
           }}
           .nav-item.active .icon-muted {{
-            stroke: #2563eb;
+            stroke: #1d4ed8;
           }}
         </style>
       </head>
       <body>
         <div class="shell">
           <aside class="sidebar">
-            <div class="brand">WT</div>
             <div class="nav">
               <div class="nav-item">
-                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-                  <circle cx="5" cy="12" r="1.5"></circle>
-                  <circle cx="12" cy="12" r="1.5"></circle>
-                  <circle cx="19" cy="12" r="1.5"></circle>
-                </svg>
+                <span class="nav-dot"></span>
               </div>
               <div class="nav-item active">
-                <svg class="icon icon-muted" viewBox="0 0 24 24" aria-hidden="true">
-                  <rect x="4" y="4" width="7" height="7" rx="1.5"></rect>
-                  <rect x="13" y="4" width="7" height="7" rx="1.5"></rect>
-                  <rect x="4" y="13" width="7" height="7" rx="1.5"></rect>
-                  <rect x="13" y="13" width="7" height="7" rx="1.5"></rect>
-                </svg>
+                <span class="nav-dot blue"></span>
               </div>
               <div class="nav-item">
-                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M4 6h16v12H4z"></path>
-                  <path d="M4 7l8 6 8-6"></path>
-                </svg>
+                <span class="nav-dot yellow"></span>
               </div>
             </div>
             <div class="nav-bottom">
               <div class="nav-item">
-                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-                  <circle cx="12" cy="12" r="3.5"></circle>
-                  <path d="M19 12l2-1-2-1-1-2 1-2-2-1-1-2-2 1-2-1-2 1-2-1-2 1 1 2-1 2 1 2-1 2 2 1 1 2 2-1 2 1 2-1 2 1 1-2 2-1-1-2 1-2z"></path>
-                </svg>
+                <span class="nav-dot orange"></span>
+              </div>
+              <div class="nav-item">
+                <span class="nav-dot sky"></span>
               </div>
             </div>
           </aside>
@@ -859,6 +897,13 @@ def dashboard(request):
                   </div>
                   <div class="chip ghost">Por usuario</div>
                 </div>
+                <div class="detail-tabs">
+                  <span class="tab active">Resumen</span>
+                  <span class="tab">Por Usuario</span>
+                  <span class="tab">Item2</span>
+                  <span class="tab">Item2</span>
+                  <span class="tab">Item3</span>
+                </div>
                 <div class="detail-main">
                   <div class="donut-card">
                     <div class="donut-title">Total enviados</div>
@@ -884,12 +929,6 @@ def dashboard(request):
                       <canvas id="reportChart"></canvas>
                       <span class="mini-label">{report_rate}% Report</span>
                       <span class="mini-value">{totals["reported"]} usuarios</span>
-                    </a>
-                    <a class="mini-donut {'active' if selected_metric == 'opened' else ''}"
-                       href="?{escape(urlencode({'campaign': selected_campaign_id or '', 'q': search_term, 'metric': 'opened'}))}">
-                      <canvas id="openedChart"></canvas>
-                      <span class="mini-label">{open_rate}% Open email</span>
-                      <span class="mini-value">{totals["opened"]} usuarios</span>
                     </a>
                   </div>
                 </div>
@@ -923,16 +962,15 @@ def dashboard(request):
               type: "doughnut",
               data: {{
                 labels: ["Valor", "Restante"],
-                datasets: [{{ data: [value, 100 - value], backgroundColor: [color, "#1f2937"] }}],
+                datasets: [{{ data: [value, 100 - value], backgroundColor: [color, "#e5e7eb"] }}],
               }},
               options: {{ plugins: {{ legend: {{ display: false }} }}, cutout: "72%" }},
             }});
           }};
-          buildDonut("openChart", {open_rate}, "#2563eb");
-          buildDonut("ctaChart", {cta_rate}, "#2563eb");
-          buildDonut("submitChart", {submit_rate}, "#2563eb");
-          buildDonut("reportChart", {report_rate}, "#2563eb");
-          buildDonut("openedChart", {open_rate}, "#2563eb");
+          buildDonut("openChart", {open_rate}, "#1d4ed8");
+          buildDonut("ctaChart", {cta_rate}, "#ec4899");
+          buildDonut("submitChart", {submit_rate}, "#f59e0b");
+          buildDonut("reportChart", {report_rate}, "#22c55e");
         </script>
       </body>
     </html>
