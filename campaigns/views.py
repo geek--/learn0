@@ -1099,3 +1099,546 @@ def dashboard(request):
     body_v2 = body_v3
     body = body_v3
     return HttpResponse(body_v3, content_type="text/html")
+
+
+@require_GET
+def dashboard_v2(request):
+    body_v2 = """
+    <html lang="es">
+      <head>
+        <meta charset="utf-8" />
+        <title>Dashboard v2</title>
+        <style>
+          :root {
+            color-scheme: light;
+          }
+          * {
+            box-sizing: border-box;
+          }
+          body {
+            margin: 0;
+            font-family: "Inter", "Segoe UI", sans-serif;
+            background: #f6f7fb;
+            color: #1f2937;
+          }
+          .shell {
+            min-height: 100vh;
+            display: flex;
+            gap: 0;
+          }
+          .sidebar {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            width: 82px;
+            background: #ffffff;
+            border-right: 1px solid #e5e7eb;
+            display: flex;
+            flex-direction: column;
+            padding: 18px 14px;
+            gap: 18px;
+            transition: width 0.2s ease;
+            z-index: 2;
+            overflow: hidden;
+          }
+          .sidebar.expanded {
+            width: 230px;
+          }
+          .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            color: #2563eb;
+            font-size: 16px;
+            width: 100%;
+            justify-content: center;
+          }
+          .sidebar.expanded .brand {
+            justify-content: flex-start;
+          }
+          .brand-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: 2px solid #2563eb;
+            display: grid;
+            place-items: center;
+            font-size: 16px;
+          }
+          .footer-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            border-radius: 999px;
+            border: 1px solid #e5e7eb;
+            background: #ffffff;
+            color: #6b7280;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+          }
+          .footer-item svg {
+            width: 18px;
+            height: 18px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 1.8;
+          }
+          .sidebar:not(.expanded) .footer-item {
+            justify-content: center;
+            padding: 8px 0;
+            width: 32px;
+            height: 32px;
+          }
+          .nav {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+          }
+          .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-radius: 14px;
+            padding: 10px 12px;
+            color: #1f2937;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            border: 1px solid transparent;
+          }
+          .sidebar:not(.expanded) .nav-item {
+            justify-content: center;
+            padding: 10px 0;
+          }
+          .nav-item svg {
+            width: 20px;
+            height: 20px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 1.8;
+          }
+          .nav-item.active {
+            background: #eaf1ff;
+            border-color: #c7dcff;
+            color: #1d4ed8;
+          }
+          .nav-label {
+            white-space: nowrap;
+            opacity: 0;
+            transform: translateX(-6px);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+          }
+          .sidebar:not(.expanded) .nav-label,
+          .sidebar:not(.expanded) .brand span {
+            display: none;
+          }
+          .sidebar.expanded .nav-label,
+          .sidebar.expanded .brand span {
+            opacity: 1;
+            transform: translateX(0);
+          }
+          .brand span {
+            opacity: 0;
+            transform: translateX(-6px);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+          }
+          .nav-footer {
+            margin-top: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+          }
+          .sidebar:not(.expanded) .nav-footer {
+            align-items: center;
+          }
+          .footer-label {
+            white-space: nowrap;
+          }
+          .sidebar:not(.expanded) .footer-label {
+            display: none;
+          }
+          .main {
+            flex: 1;
+            margin-left: 82px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+          }
+          .sidebar.expanded ~ .main {
+            margin-left: 230px;
+          }
+          .header {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            background: #f6f7fb;
+            padding: 18px 28px 12px;
+            border-bottom: 1px solid #e5e7eb;
+          }
+          .header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+          }
+          .header-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+          }
+          .header h1 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 700;
+          }
+          .header p {
+            margin: 4px 0 0;
+            font-size: 12px;
+            color: #6b7280;
+          }
+          .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            color: #4b5563;
+          }
+          .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            font-weight: 600;
+            color: #111827;
+          }
+          .content {
+            flex: 1;
+            padding: 18px 28px 32px;
+          }
+          .content-grid {
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            gap: 18px;
+          }
+          .panel {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            padding: 14px;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+          }
+          .search {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            background: #f9fafb;
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 12px;
+          }
+          .search input {
+            border: none;
+            outline: none;
+            background: transparent;
+            flex: 1;
+            font-size: 12px;
+            color: #111827;
+          }
+          .campaign-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+          }
+          .campaign-card {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            padding: 10px 12px;
+            border-radius: 14px;
+            border: 1px solid #e5e7eb;
+            text-decoration: none;
+            color: inherit;
+            background: #ffffff;
+          }
+          .campaign-card.active {
+            border-color: #c7dcff;
+            background: #eaf1ff;
+            color: #1d4ed8;
+          }
+          .campaign-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            display: grid;
+            place-items: center;
+            background: #f3f4f6;
+            color: #111827;
+            font-weight: 700;
+          }
+          .campaign-name {
+            font-size: 13px;
+            font-weight: 600;
+          }
+          .campaign-meta {
+            font-size: 11px;
+            color: #9ca3af;
+          }
+          .detail-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+          }
+          .detail-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 14px;
+            background: #eaf1ff;
+            color: #1d4ed8;
+            display: grid;
+            place-items: center;
+            font-weight: 700;
+          }
+          .detail-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin: 0;
+          }
+          .detail-menu {
+            display: flex;
+            gap: 16px;
+            border-bottom: 1px solid #e5e7eb;
+            padding-bottom: 10px;
+            margin-bottom: 16px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #6b7280;
+          }
+          .detail-menu a {
+            text-decoration: none;
+            color: inherit;
+            padding-bottom: 6px;
+            border-bottom: 2px solid transparent;
+          }
+          .detail-menu a.active {
+            color: #1d4ed8;
+            border-color: #1d4ed8;
+          }
+          .canvas {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 18px;
+            min-height: 70vh;
+            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.06);
+            position: relative;
+            overflow: hidden;
+          }
+          .canvas::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 22%;
+            background: radial-gradient(circle at 20% 20%, #eaf1ff 0, transparent 55%),
+              radial-gradient(circle at 20% 80%, #e8f3ff 0, transparent 60%);
+            opacity: 0.9;
+          }
+          .canvas-inner {
+            position: relative;
+            z-index: 1;
+            padding: 28px;
+          }
+          .muted {
+            color: #94a3b8;
+            font-size: 13px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="shell">
+          <aside class="sidebar expanded" id="sidebar">
+            <div class="brand">
+              <div class="brand-icon">∞</div>
+              <span>Security</span>
+            </div>
+            <nav class="nav">
+              <a class="nav-item active" data-title="Campañas" href="#">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4 13h4v7H4z"></path>
+                  <path d="M10 9h4v11h-4z"></path>
+                  <path d="M16 5h4v15h-4z"></path>
+                </svg>
+                <span class="nav-label">Campañas</span>
+              </a>
+              <a class="nav-item" data-title="Resultados" href="#">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4 4h16v16H4z"></path>
+                  <path d="M8 8h8v8H8z"></path>
+                </svg>
+                <span class="nav-label">Resultados</span>
+              </a>
+              <a class="nav-item" data-title="Contactos" href="#">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M16 11a4 4 0 1 1-8 0 4 4 0 0 1 8 0z"></path>
+                  <path d="M4 20a8 8 0 0 1 16 0"></path>
+                </svg>
+                <span class="nav-label">Contactos</span>
+              </a>
+              <a class="nav-item" data-title="Reportes" href="#">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M5 4h10l4 4v12H5z"></path>
+                  <path d="M9 14h6"></path>
+                  <path d="M9 10h6"></path>
+                </svg>
+                <span class="nav-label">Reportes</span>
+              </a>
+            </nav>
+            <div class="nav-footer">
+              <button class="footer-item" id="toggle" aria-label="Expandir o contraer menú" type="button">
+                <svg viewBox="0 0 24 24" aria-hidden="true" class="toggle-icon">
+                  <path d="M9 6l6 6-6 6"></path>
+                </svg>
+                <span class="footer-label">Contraer</span>
+              </button>
+              <a class="footer-item" href="#">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 3v2"></path>
+                  <path d="M12 19v2"></path>
+                  <path d="M4.9 4.9l1.4 1.4"></path>
+                  <path d="M17.7 17.7l1.4 1.4"></path>
+                  <path d="M3 12h2"></path>
+                  <path d="M19 12h2"></path>
+                  <path d="M4.9 19.1l1.4-1.4"></path>
+                  <path d="M17.7 6.3l1.4-1.4"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                <span class="footer-label">Configuración</span>
+              </a>
+              <a class="footer-item" href="#">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M9 6v-1a2 2 0 0 1 2-2h6"></path>
+                  <path d="M15 6h4v12h-4"></path>
+                  <path d="M10 12h9"></path>
+                  <path d="M7 9l-3 3 3 3"></path>
+                </svg>
+                <span class="footer-label">Cerrar sesión</span>
+              </a>
+            </div>
+          </aside>
+
+          <main class="main">
+            <header class="header">
+              <div class="header-row">
+                <div class="header-title">
+                  <div>
+                    <h1 id="headerTitle">Campañas</h1>
+                    <p>Review performance results and more.</p>
+                  </div>
+                </div>
+                <div class="header-actions">
+                  <span class="pill">● Título</span>
+                  <span>Last 28 days: 27 Jul 2024 - 23 Aug 2024</span>
+                </div>
+              </div>
+            </header>
+
+            <section class="content">
+              <div class="content-grid">
+                <aside class="panel">
+                  <div class="search">
+                    <span>🔍</span>
+                    <input type="text" placeholder="Buscar campaña" />
+                  </div>
+                  <div class="campaign-list">
+                    <a class="campaign-card active" href="#">
+                      <div class="campaign-avatar">CP</div>
+                      <div>
+                        <div class="campaign-name">Campaña Phishing</div>
+                        <div class="campaign-meta">Jul 2024 · Activa</div>
+                      </div>
+                    </a>
+                    <a class="campaign-card" href="#">
+                      <div class="campaign-avatar">IN</div>
+                      <div>
+                        <div class="campaign-name">Ingeniería Social</div>
+                        <div class="campaign-meta">Jun 2024 · 120 usuarios</div>
+                      </div>
+                    </a>
+                    <a class="campaign-card" href="#">
+                      <div class="campaign-avatar">RF</div>
+                      <div>
+                        <div class="campaign-name">Reporte Falso</div>
+                        <div class="campaign-meta">May 2024 · Cerrada</div>
+                      </div>
+                    </a>
+                  </div>
+                </aside>
+
+                <div class="canvas">
+                  <div class="canvas-inner">
+                    <div class="detail-header">
+                      <div class="detail-icon">CP</div>
+                      <div>
+                        <p class="detail-title">Campaña Phishing</p>
+                        <div class="muted">Última actualización hace 2 días</div>
+                      </div>
+                    </div>
+                    <nav class="detail-menu">
+                      <a class="active" href="#">Resumen</a>
+                      <a href="#">Usuarios</a>
+                      <a href="#">Areas</a>
+                    </nav>
+                    <div class="muted">Contenido flexible</div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </main>
+        </div>
+        <script>
+          const sidebar = document.getElementById("sidebar");
+          const toggle = document.getElementById("toggle");
+          const headerTitle = document.getElementById("headerTitle");
+          const items = document.querySelectorAll(".nav-item");
+          const toggleIcon = toggle.querySelector(".toggle-icon");
+          const toggleLabel = toggle.querySelector(".footer-label");
+
+          const setToggleState = (isExpanded) => {
+            toggleIcon.innerHTML = isExpanded
+              ? '<path d="M15 6l-6 6 6 6"></path>'
+              : '<path d="M9 6l6 6-6 6"></path>';
+            toggleLabel.textContent = isExpanded ? "Contraer" : "Expandir";
+          };
+
+          setToggleState(true);
+
+          toggle.addEventListener("click", () => {
+            const isExpanded = sidebar.classList.toggle("expanded");
+            setToggleState(isExpanded);
+          });
+
+          items.forEach((item) => {
+            item.addEventListener("click", (event) => {
+              event.preventDefault();
+              items.forEach((node) => node.classList.remove("active"));
+              item.classList.add("active");
+              headerTitle.textContent = item.dataset.title || "Campañas";
+            });
+          });
+        </script>
+      </body>
+    </html>
+    """
+    return HttpResponse(body_v2, content_type="text/html")
