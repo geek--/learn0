@@ -498,7 +498,7 @@ def dashboard(request):
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 18px;
+            gap: 16px;
           }}
           .brand {{
             width: 24px;
@@ -560,6 +560,11 @@ def dashboard(request):
           .nav-dot.sky {{
             background: #bfdbfe;
             border-color: #60a5fa;
+          }}
+          .nav-bottom {{
+            margin-top: auto;
+            display: grid;
+            gap: 12px;
           }}
           .content {{
             flex: 1;
