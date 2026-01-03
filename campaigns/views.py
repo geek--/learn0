@@ -1139,6 +1139,8 @@ def dashboard_v2(request):
     )
     sent_count = 0
     opened_count = 0
+    click_count = 0
+    landing_count = 0
     cta_count = 0
     submit_count = 0
     report_count = 0
@@ -1156,6 +1158,8 @@ def dashboard_v2(request):
         opened_count = recipients.filter(
             models.Q(opened_at__isnull=False) | models.Q(open_seen_at__isnull=False)
         ).count()
+        click_count = recipients.filter(click_count__gt=0).count()
+        landing_count = recipients.filter(landing_view_count__gt=0).count()
         cta_count = recipients.filter(cta_click_count__gt=0).count()
         submit_count = recipients.filter(submit_attempted=True).count()
         report_count = recipients.filter(reported_at__isnull=False).count()
@@ -1180,6 +1184,8 @@ def dashboard_v2(request):
                     "area": recipient.area or recipient.department or "--",
                     "role": recipient.role or "--",
                     "opened": item.opened_at is not None or item.open_seen_at is not None,
+                    "click": item.click_count > 0,
+                    "landing": item.landing_view_count > 0,
                     "cta": item.cta_click_count > 0,
                     "submit": item.submit_attempted,
                     "report": item.reported_at is not None,
@@ -1188,14 +1194,19 @@ def dashboard_v2(request):
 
     total_for_rates = total_recipients or 1
     open_rate = int((opened_count / total_for_rates) * 100)
+    click_rate = int((click_count / total_for_rates) * 100)
+    landing_rate = int((landing_count / total_for_rates) * 100)
     cta_rate = int((cta_count / total_for_rates) * 100)
     submit_rate = int((submit_count / total_for_rates) * 100)
     report_rate = int((report_count / total_for_rates) * 100)
     event_stats = [
+        {"key": "click", "label": "Click", "count": click_count, "rate": click_rate},
+        {"key": "landing", "label": "Landing", "count": landing_count, "rate": landing_rate},
         {"key": "cta", "label": "Click CTA", "count": cta_count, "rate": cta_rate},
         {"key": "submit", "label": "Submited Data", "count": submit_count, "rate": submit_rate},
         {"key": "report", "label": "Report", "count": report_count, "rate": report_rate},
     ]
+    event_stats = [stat for stat in event_stats if stat["count"] > 0]
 
     context = {
         "campaign_list": campaign_list,

@@ -782,6 +782,8 @@
                       {% if recipient_rows %}
                         {% for row in recipient_rows %}
                           <tr data-opened="{{ row.opened|yesno:'yes,no' }}"
+                              data-click="{{ row.click|yesno:'yes,no' }}"
+                              data-landing="{{ row.landing|yesno:'yes,no' }}"
                               data-cta="{{ row.cta|yesno:'yes,no' }}"
                               data-submit="{{ row.submit|yesno:'yes,no' }}"
                               data-report="{{ row.report|yesno:'yes,no' }}">
