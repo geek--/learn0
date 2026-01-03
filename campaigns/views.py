@@ -5,7 +5,7 @@ from urllib.parse import urlencode
 
 from django.db import models
 from django.http import HttpResponse, JsonResponse
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import escape
@@ -1099,3 +1099,51 @@ def dashboard(request):
     body_v2 = body_v3
     body = body_v3
     return HttpResponse(body_v3, content_type="text/html")
+
+
+@require_GET
+def dashboard_v2(request):
+    campaigns = Campaign.objects.order_by("-start_at")
+    query = request.GET.get("q", "").strip()
+    if query:
+        campaigns = campaigns.filter(name__icontains=query)
+    selected_campaign_id = request.GET.get("campaign")
+    selected_campaign = campaigns.filter(id=selected_campaign_id).first() if selected_campaign_id else campaigns.first()
+    selected_campaign_initials = (
+        "".join(word[0] for word in selected_campaign.name.split()[:2]).upper()
+        if selected_campaign
+        else "--"
+    )
+    selected_campaign_date = (
+        f"{selected_campaign.start_at:%d %b %Y} · {selected_campaign.end_at:%d %b %Y}"
+        if selected_campaign
+        else ""
+    )
+
+    campaign_list = []
+    for index, campaign in enumerate(campaigns):
+        initials = "".join(word[0] for word in campaign.name.split()[:2]).upper() or "--"
+        date_range = f"{campaign.start_at:%d %b %Y} · {campaign.end_at:%d %b %Y}"
+        campaign_list.append(
+            {
+                "initials": initials,
+                "name": campaign.name,
+                "date_range": date_range,
+                "is_active": campaign.id == selected_campaign.id if selected_campaign else index == 0,
+                "id": campaign.id,
+            }
+        )
+
+    total_recipients = (
+        CampaignRecipient.objects.filter(campaign=selected_campaign).count() if selected_campaign else 0
+    )
+
+    context = {
+        "campaign_list": campaign_list,
+        "selected_campaign": selected_campaign,
+        "selected_campaign_initials": selected_campaign_initials,
+        "selected_campaign_date": selected_campaign_date,
+        "total_recipients": total_recipients,
+        "query": query,
+    }
+    return render(request, "campaigns/dashboard_v2.html", context)
