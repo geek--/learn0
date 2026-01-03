@@ -6,6 +6,7 @@ app_name = "campaigns"
 
 urlpatterns = [
     path("dashboard/", views.dashboard, name="dashboard"),
+    path("dashboardv2/", views.dashboard_v2, name="dashboard-v2"),
     path("t/open/<uuid:token>/", views.track_open, name="track-open"),
     path("t/click/<uuid:token>/", views.track_click, name="track-click"),
     path("t/cta/<uuid:token>/", views.track_cta, name="track-cta"),
