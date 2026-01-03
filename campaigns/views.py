@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from urllib.parse import urlencode
 
 from django.db import models
 from django.http import HttpResponse, JsonResponse
@@ -305,6 +306,7 @@ def dashboard(request):
         "opened": 0,
         "landing": 0,
         "cta": 0,
+        "submit": 0,
         "reported": 0,
         "bounced": 0,
     }
@@ -329,6 +331,8 @@ def dashboard(request):
             totals["landing"] += 1
         if item.cta_click_count:
             totals["cta"] += 1
+        if item.submit_attempted:
+            totals["submit"] += 1
         if item.reported_at:
             totals["reported"] += 1
         if item.status == CampaignRecipient.Status.BOUNCED:
@@ -377,32 +381,54 @@ def dashboard(request):
 
     total_count = totals["count"] or 1
     open_rate = int((totals["opened"] / total_count) * 100)
-    landing_rate = int((totals["landing"] / total_count) * 100)
     cta_rate = int((totals["cta"] / total_count) * 100)
-    report_rate = int((totals["reported"] / total_count) * 100)
-    chart_payload = {
-        "labels": list(criticality_counts.keys()),
-        "counts": list(criticality_counts.values()),
-        "funnel_labels": [
-            "Enviados",
-            "Abiertos",
-            "Landing",
-            "CTA",
-            "Reportados",
-            "Rebotados",
-        ],
-        "funnel_counts": [
-            totals["sent"],
-            totals["opened"],
-            totals["landing"],
-            totals["cta"],
-            totals["reported"],
-            totals["bounced"],
-        ],
-        "rates": [open_rate, landing_rate, cta_rate, report_rate],
-    }
+    submit_rate = int((totals["submit"] / total_count) * 100)
     def _format_datetime(value):
         return value.strftime("%d/%m/%Y, %H:%M") if value else "--"
+
+    selected_campaign_obj = None
+    if selected_campaign:
+        selected_campaign_obj = campaigns.filter(id=selected_campaign).first()
+    if selected_campaign_obj is None:
+        selected_campaign_obj = campaigns.first()
+    selected_campaign_name = (
+        selected_campaign_obj.name if selected_campaign_obj else "Campaña sin seleccionar"
+    )
+    selected_campaign_id = selected_campaign_obj.id if selected_campaign_obj else None
+
+    campaign_items = []
+    for campaign in campaigns:
+        query = {"campaign": campaign.id}
+        if search_term:
+            query["q"] = search_term
+        date_range = f"{campaign.start_at:%d/%m/%Y} · {campaign.end_at:%d/%m/%Y}"
+        campaign_items.append(
+            f"""
+            <a class="campaign-item {'active' if campaign.id == selected_campaign_id else ''}"
+               href="?{escape(urlencode(query))}">
+              <div class="campaign-icon">📣</div>
+              <div>
+                <div class="campaign-name">{escape(campaign.name)}</div>
+                <div class="campaign-meta">{escape(date_range)}</div>
+              </div>
+            </a>
+            """
+        )
+
+    recipient_rows = "".join(
+        [
+            f"""
+            <tr>
+              <td>{escape(item.recipient.full_name or item.recipient.email)}</td>
+              <td>{escape(item.recipient.department or 'Sin área')}</td>
+              <td>{escape(_format_datetime(item.created_at))}</td>
+              <td>Email</td>
+              <td>{escape(item.get_status_display())}</td>
+            </tr>
+            """
+            for item in recipients[:6]
+        ]
+    )
 
     campaign_stats = (
         recipients.values("campaign_id", "campaign__name")
@@ -428,286 +454,372 @@ def dashboard(request):
     <html lang="es">
       <head>
         <meta charset="utf-8" />
-        <title>Dashboard v3</title>
+        <title>Administración de campañas</title>
         <style>
           body {{
             margin: 0;
             font-family: "Inter", "Segoe UI", sans-serif;
-            background: #f5f7fb;
-            color: #2b2f33;
+            background: #f6f1ef;
+            color: #3b2f33;
           }}
-          .page {{
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 24px 32px 48px;
+          .shell {{
+            min-height: 100vh;
+            display: flex;
           }}
-          .headline {{
-            font-size: 26px;
-            margin: 0;
+          .sidebar {{
+            width: 80px;
+            background: #fdf9f7;
+            border-right: 1px solid #e7d7d5;
+            padding: 18px 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 18px;
           }}
-          .subhead {{
-            margin: 6px 0 20px;
-            color: #6b7280;
-            font-size: 13px;
-          }}
-          .top-tabs {{
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 12px;
-            margin-bottom: 16px;
-          }}
-          .top-tab {{
-            background: #ffffff;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 12px 10px;
-            text-align: center;
-            font-weight: 600;
-            color: #4b5563;
-            text-decoration: none;
-            display: block;
-          }}
-          .top-tab span {{
-            display: block;
-            font-size: 12px;
-            color: #6b7280;
-            margin-top: 4px;
-            font-weight: 500;
-          }}
-          .top-metrics {{
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 8px;
-            margin-bottom: 18px;
-          }}
-          .top-metric {{
-            background: #ffffff;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 10px 8px;
-            text-align: center;
-            color: #4f46e5;
+          .brand {{
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 2px solid #b45b69;
+            color: #b45b69;
             font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
           }}
-          .grid {{
+          .nav {{
             display: grid;
-            grid-template-columns: repeat(12, 1fr);
             gap: 16px;
           }}
-          .card {{
-            background: #ffffff;
-            border: 1px solid #e5e7eb;
+          .nav-item {{
+            width: 38px;
+            height: 38px;
             border-radius: 12px;
-            padding: 16px;
+            border: 1px solid #e7d7d5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: #9b5661;
+            background: #ffffff;
           }}
-          .card h3 {{
-            margin: 0 0 12px;
+          .nav-item.active {{
+            background: #f3dee1;
+            border-color: #b45b69;
+          }}
+          .content {{
+            flex: 1;
+            padding: 28px 32px 40px;
+          }}
+          .page-header {{
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 20px;
+          }}
+          .page-header h1 {{
+            margin: 0;
+            font-size: 26px;
+            color: #7b3e4a;
+          }}
+          .page-header p {{
+            margin: 6px 0 0;
+            font-size: 13px;
+            color: #7a666b;
+          }}
+          .header-actions {{
+            display: flex;
+            gap: 10px;
+            align-items: center;
+          }}
+          .chip {{
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: #f3dee1;
+            border: 1px solid #d9b0b7;
+            color: #7b3e4a;
+            font-weight: 600;
+            font-size: 12px;
+          }}
+          .chip.ghost {{
+            background: #fff;
+            border-color: #ead4d8;
+          }}
+          .content-grid {{
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 20px;
+          }}
+          .panel {{
+            background: #ffffff;
+            border: 1px solid #ead4d8;
+            border-radius: 18px;
+            padding: 18px;
+            box-shadow: 0 2px 6px rgba(125, 71, 82, 0.05);
+          }}
+          .campaigns-panel {{
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+          }}
+          .panel-header {{
+            font-size: 13px;
+            font-weight: 600;
+            color: #9b5661;
+          }}
+          .search-input {{
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            border: 1px solid #ead4d8;
+            background: #fdf9f7;
+          }}
+          .search-input input {{
+            border: none;
+            outline: none;
+            background: transparent;
+            flex: 1;
+            font-size: 13px;
+            color: #6f565c;
+          }}
+          .search-btn {{
+            border: none;
+            background: transparent;
+            font-size: 16px;
+            color: #9b5661;
+            cursor: pointer;
+          }}
+          .campaign-list {{
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+          }}
+          .campaign-item {{
+            display: flex;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: 14px;
+            border: 1px solid transparent;
+            text-decoration: none;
+            color: inherit;
+            background: #fcf7f6;
+          }}
+          .campaign-item.active {{
+            border-color: #c77b89;
+            background: #f4e3e6;
+          }}
+          .campaign-icon {{
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            background: #f3dee1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+          }}
+          .campaign-name {{
+            font-weight: 600;
             font-size: 14px;
-            color: #4f46e5;
+          }}
+          .campaign-meta {{
+            font-size: 12px;
+            color: #846a70;
+          }}
+          .detail-header {{
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 16px;
+          }}
+          .detail-title {{
+            font-size: 18px;
+            font-weight: 700;
+            color: #7b3e4a;
+          }}
+          .detail-sub {{
+            font-size: 13px;
+            color: #7a666b;
+          }}
+          .detail-main {{
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 18px;
+            align-items: center;
+            margin-bottom: 18px;
+          }}
+          .donut-card {{
+            text-align: center;
+            padding: 14px;
+            border-radius: 16px;
+            border: 1px solid #f0d5da;
+            background: #fff7f8;
+          }}
+          .donut-title {{
+            font-size: 12px;
+            color: #9b5661;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+          }}
+          .donut-number {{
+            font-size: 22px;
+            font-weight: 700;
+            margin: 8px 0;
+          }}
+          .donut-label {{
+            font-size: 12px;
+            color: #7a666b;
+            margin-top: 6px;
+          }}
+          .donut-canvas {{
+            width: 160px;
+            height: 160px;
+            margin: 0 auto;
+          }}
+          .mini-donut {{
+            text-align: center;
+            padding: 12px;
+            border-radius: 14px;
+            border: 1px solid #f0d5da;
+            background: #fff;
+          }}
+          .mini-donut canvas {{
+            width: 80px;
+            height: 80px;
+          }}
+          .mini-label {{
+            font-size: 12px;
+            color: #7a666b;
+            margin-top: 6px;
+          }}
+          .detail-table h4 {{
+            margin: 0 0 8px;
+            font-size: 13px;
+            color: #9b5661;
             text-transform: uppercase;
             letter-spacing: 0.4px;
           }}
-          .ring {{
-            width: 120px;
-            height: 120px;
-            margin: 0 auto 12px;
-          }}
-          .ring-label {{
-            text-align: center;
-            font-weight: 600;
-          }}
-          .bar-row {{
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 10px;
-          }}
-          .bar {{
-            flex: 1;
-            height: 10px;
-            border-radius: 999px;
-            background: #e5e7eb;
-            overflow: hidden;
-          }}
-          .bar span {{
-            display: block;
-            height: 100%;
-            background: linear-gradient(90deg, #6366f1, #a5b4fc);
-          }}
-          .avatar-list {{
-            display: grid;
-            gap: 12px;
-          }}
-          .avatar-item {{
-            display: flex;
-            gap: 12px;
-            align-items: center;
-          }}
-          .avatar {{
-            width: 36px;
-            height: 36px;
-            border-radius: 999px;
-            background: #c7d2fe;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            color: #4338ca;
-          }}
-          .muted {{
-            color: #6b7280;
-            font-size: 12px;
-          }}
-          .campaign-table {{
+          .detail-table table {{
             width: 100%;
             border-collapse: collapse;
             font-size: 13px;
           }}
-          .campaign-table th,
-          .campaign-table td {{
+          .detail-table th,
+          .detail-table td {{
             text-align: left;
-            padding: 10px 8px;
-            border-bottom: 1px solid #e5e7eb;
+            padding: 10px 6px;
+            border-bottom: 1px solid #f1dfe2;
+          }}
+          .detail-table th {{
+            color: #9b5661;
+            font-weight: 600;
+            font-size: 12px;
+          }}
+          .muted {{
+            color: #9a8086;
+            font-size: 12px;
           }}
         </style>
       </head>
       <body>
-        <div class="page">
-          <h1 class="headline">Cyber Phishing Dashboard</h1>
-          <p class="subhead">Resumen de campañas, riesgos y curvas de mejora con el estilo de referencia.</p>
-          <div class="top-tabs">
-            <a class="top-tab" href="#campaigns">Campaigns<span>{len(campaigns)}</span></a>
-            <a class="top-tab" href="#campaigns">Recipients<span>{totals["count"]}</span></a>
-            <a class="top-tab" href="#campaigns">Delivered<span>{totals["sent"]}</span></a>
-            <a class="top-tab" href="#campaigns">Opened<span>{totals["opened"]}</span></a>
-            <a class="top-tab" href="#campaigns">Clicked<span>{totals["cta"]}</span></a>
-            <a class="top-tab" href="#campaigns">Reported<span>{totals["reported"]}</span></a>
-            <a class="top-tab" href="#campaigns">Bounced<span>{totals["bounced"]}</span></a>
-          </div>
-          <div class="top-metrics">
-            <div class="top-metric">{totals["sent"]}</div>
-            <div class="top-metric">{totals["opened"]}</div>
-            <div class="top-metric">{totals["reported"]}</div>
-            <div class="top-metric">{totals["count"]}</div>
-            <div class="top-metric">{totals["landing"]}</div>
-            <div class="top-metric">{totals["cta"]}</div>
-            <div class="top-metric">{totals["bounced"]}</div>
-          </div>
-          <div class="grid">
-            <div class="card" style="grid-column: span 6;">
-              <h3>Organisation Health Risk (Phishing Open Rate)</h3>
-              <canvas class="ring" id="riskChart"></canvas>
-              <div class="ring-label">Phishing Campaigns · {open_rate}%</div>
+        <div class="shell">
+          <aside class="sidebar">
+            <div class="brand">WT</div>
+            <div class="nav">
+              <div class="nav-item">⋯</div>
+              <div class="nav-item active">📊</div>
+              <div class="nav-item">✉️</div>
             </div>
-            <div class="card" style="grid-column: span 6;">
-              <h3>Attack Vectors</h3>
-              <div class="bar-row">
-                <span>Phishing</span>
-                <div class="bar"><span style="width: 100%;"></span></div>
-                <strong>100%</strong>
+            <div class="nav-item">⚙️</div>
+          </aside>
+          <main class="content">
+            <header class="page-header">
+              <div>
+                <h1>Campañas de phishing</h1>
+                <p>Administración de campañas y métricas clave en tiempo real.</p>
               </div>
-              <div class="bar-row">
-                <span>Smishing</span>
-                <div class="bar"><span style="width: 0%;"></span></div>
-                <strong>0%</strong>
+              <div class="header-actions">
+                <div class="chip">Resumen</div>
+                <div class="chip ghost">{escape(selected_campaign_name)}</div>
               </div>
-              <div class="bar-row">
-                <span>Vishing</span>
-                <div class="bar"><span style="width: 0%;"></span></div>
-                <strong>0%</strong>
-              </div>
-            </div>
-            <div class="card" style="grid-column: span 6;">
-              <h3>Overall Risk Review</h3>
-              <canvas id="riskBarChart" height="160"></canvas>
-            </div>
-            <div class="card" style="grid-column: span 6;">
-              <h3>Improvement Curve</h3>
-              <canvas id="improvementChart" height="160"></canvas>
-            </div>
-            <div class="card" style="grid-column: span 4;">
-              <h3>Recent Activity</h3>
-              <div class="avatar-list">
-                {"".join([
-                    f'''
-                    <div class="avatar-item">
-                      <div class="avatar">{escape((item.recipient.full_name or item.recipient.email)[:1].upper())}</div>
-                      <div>
-                        <div>{escape(item.recipient.full_name or item.recipient.email)}</div>
-                        <div class="muted">{escape(_format_datetime(item.created_at))}</div>
-                      </div>
-                    </div>
-                    '''
-                    for item in recipients[:6]
-                ])}
-              </div>
-            </div>
-            <div class="card" id="campaigns" style="grid-column: span 12;">
-              <h3>Detalle por Campaña</h3>
-              <table class="campaign-table">
-                <thead>
-                  <tr>
-                    <th>Campaña</th>
-                    <th>Recipients</th>
-                    <th>Delivered</th>
-                    <th>Opened</th>
-                    <th>Landing</th>
-                    <th>Clicked</th>
-                    <th>Reported</th>
-                    <th>Bounced</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {"".join([
-                      f'''
+            </header>
+            <div class="content-grid">
+              <section class="panel campaigns-panel">
+                <div class="panel-header">Busca por nombre</div>
+                <form class="search-input" method="get">
+                  <input type="hidden" name="campaign" value="{selected_campaign_id or ''}" />
+                  <input type="text" name="q" value="{escape(search_term)}" placeholder="Buscar por nombre" />
+                  <button class="search-btn" type="submit">🔍</button>
+                </form>
+                <div class="campaign-list">
+                  {"".join(campaign_items) if campaign_items else '<div class="muted">Sin campañas disponibles.</div>'}
+                </div>
+              </section>
+              <section class="panel detail-panel">
+                <div class="detail-header">
+                  <div>
+                    <div class="detail-title">{escape(selected_campaign_name)}</div>
+                    <div class="detail-sub">Total enviados: {totals["sent"]}</div>
+                  </div>
+                  <div class="chip ghost">Por usuario</div>
+                </div>
+                <div class="detail-main">
+                  <div class="donut-card">
+                    <div class="donut-title">Total enviados</div>
+                    <div class="donut-number">{totals["sent"]}</div>
+                    <canvas id="openChart" class="donut-canvas"></canvas>
+                    <div class="donut-label">{open_rate}% open email</div>
+                  </div>
+                  <div class="mini-donut">
+                    <canvas id="ctaChart"></canvas>
+                    <div class="mini-label">{cta_rate}% click CTA</div>
+                  </div>
+                  <div class="mini-donut">
+                    <canvas id="submitChart"></canvas>
+                    <div class="mini-label">{submit_rate}% submit data</div>
+                  </div>
+                </div>
+                <div class="detail-table">
+                  <h4>Detalle por usuario</h4>
+                  <table>
+                    <thead>
                       <tr>
-                        <td>{escape(stat["campaign__name"])}</td>
-                        <td>{stat["count"]}</td>
-                        <td>{stat["sent"]}</td>
-                        <td>{stat["opened"]}</td>
-                        <td>{stat["landing"]}</td>
-                        <td>{stat["cta"]}</td>
-                        <td>{stat["reported"]}</td>
-                        <td>{stat["bounced"]}</td>
+                        <th>Nombre</th>
+                        <th>Área</th>
+                        <th>Fecha</th>
+                        <th>Dispositivo</th>
+                        <th>Estado</th>
                       </tr>
-                      '''
-                      for stat in campaign_stats
-                  ]) if campaign_stats else '<tr><td colspan="8" class="muted">Sin campañas para mostrar.</td></tr>'}
-                </tbody>
-              </table>
+                    </thead>
+                    <tbody>
+                      {recipient_rows if recipient_rows else '<tr><td colspan="5" class="muted">Sin registros para mostrar.</td></tr>'}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
             </div>
-          </div>
+          </main>
         </div>
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
         <script>
-          const payload = {json.dumps(chart_payload)};
-          const riskCtx = document.getElementById("riskChart");
-          new Chart(riskCtx, {{
-            type: "doughnut",
-            data: {{
-              labels: ["Score", "Restante"],
-              datasets: [{{ data: [{open_rate}, {100 - open_rate}], backgroundColor: ["#6366f1", "#e5e7eb"] }}],
-            }},
-            options: {{ plugins: {{ legend: {{ display: false }} }}, cutout: "70%" }},
-          }});
-          const riskBarCtx = document.getElementById("riskBarChart");
-          new Chart(riskBarCtx, {{
-            type: "bar",
-            data: {{
-              labels: payload.funnel_labels,
-              datasets: [{{ data: payload.funnel_counts, backgroundColor: "#a5b4fc" }}],
-            }},
-            options: {{ plugins: {{ legend: {{ display: false }} }} }},
-          }});
-          const improvementCtx = document.getElementById("improvementChart");
-          new Chart(improvementCtx, {{
-            type: "line",
-            data: {{
-              labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"],
-              datasets: [{{ data: payload.rates, borderColor: "#6366f1", backgroundColor: "rgba(99,102,241,0.2)" }}],
-            }},
-            options: {{ plugins: {{ legend: {{ display: false }} }} }},
-          }});
+          const buildDonut = (canvasId, value, color) => {{
+            const ctx = document.getElementById(canvasId);
+            if (!ctx) return;
+            new Chart(ctx, {{
+              type: "doughnut",
+              data: {{
+                labels: ["Valor", "Restante"],
+                datasets: [{{ data: [value, 100 - value], backgroundColor: [color, "#f2e4e7"] }}],
+              }},
+              options: {{ plugins: {{ legend: {{ display: false }} }}, cutout: "72%" }},
+            }});
+          }};
+          buildDonut("openChart", {open_rate}, "#b45b69");
+          buildDonut("ctaChart", {cta_rate}, "#d3929e");
+          buildDonut("submitChart", {submit_rate}, "#9b5661");
         </script>
       </body>
     </html>
