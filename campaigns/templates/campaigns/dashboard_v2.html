@@ -374,6 +374,22 @@
         display: grid;
         place-items: center;
         position: relative;
+        transition: box-shadow 0.2s ease, transform 0.2s ease;
+      }
+      .ring-button {
+        border: none;
+        background: transparent;
+        padding: 0;
+        cursor: pointer;
+      }
+      .ring-button:hover .ring,
+      .ring-button:hover .ring-small {
+        box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.15);
+        transform: scale(1.02);
+      }
+      .ring-button.active .ring,
+      .ring-button.active .ring-small {
+        box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.25);
       }
       .ring::before {
         content: "";
@@ -426,6 +442,7 @@
         display: grid;
         place-items: center;
         position: relative;
+        transition: box-shadow 0.2s ease, transform 0.2s ease;
       }
       .ring-small::before {
         content: "";
@@ -716,12 +733,14 @@
                   </div>
                   <div class="stat-circles">
                     <div class="stat-large">
-                      <div class="ring" style="--value: {{ open_rate }};">
-                        <div class="ring-content">
-                          <strong>{{ sent_count }}</strong>
-                          <span>Enviados</span>
+                      <button class="ring-button" data-filter="opened" type="button">
+                        <div class="ring" style="--value: {{ open_rate }};">
+                          <div class="ring-content">
+                            <strong>{{ sent_count }}</strong>
+                            <span>Enviados</span>
+                          </div>
                         </div>
-                      </div>
+                      </button>
                       <div class="ring-info">
                         <div class="percent">{{ open_rate }}%</div>
                         <div class="label">Abrieron el correo</div>
@@ -729,30 +748,18 @@
                       </div>
                     </div>
                     <div class="stats-grid">
-                      <div>
-                        <div class="ring-small" style="--value: {{ cta_rate }};">
-                          <div class="ring-content">
-                            <strong>{{ cta_rate }}%</strong>
-                          </div>
+                      {% for stat in event_stats %}
+                        <div>
+                          <button class="ring-button" data-filter="{{ stat.key }}" type="button">
+                            <div class="ring-small" style="--value: {{ stat.rate }};">
+                              <div class="ring-content">
+                                <strong>{{ stat.rate }}%</strong>
+                              </div>
+                            </div>
+                          </button>
+                          <div class="ring-label">{{ stat.label }}</div>
                         </div>
-                        <div class="ring-label">Click CTA</div>
-                      </div>
-                      <div>
-                        <div class="ring-small" style="--value: {{ submit_rate }};">
-                          <div class="ring-content">
-                            <strong>{{ submit_rate }}%</strong>
-                          </div>
-                        </div>
-                        <div class="ring-label">Submited Data</div>
-                      </div>
-                      <div>
-                        <div class="ring-small" style="--value: {{ report_rate }};">
-                          <div class="ring-content">
-                            <strong>{{ report_rate }}%</strong>
-                          </div>
-                        </div>
-                        <div class="ring-label">Report</div>
-                      </div>
+                      {% endfor %}
                     </div>
                   </div>
                 </div>
@@ -774,7 +781,10 @@
                     <tbody>
                       {% if recipient_rows %}
                         {% for row in recipient_rows %}
-                          <tr>
+                          <tr data-opened="{{ row.opened|yesno:'yes,no' }}"
+                              data-cta="{{ row.cta|yesno:'yes,no' }}"
+                              data-submit="{{ row.submit|yesno:'yes,no' }}"
+                              data-report="{{ row.report|yesno:'yes,no' }}">
                             <td>{{ row.name }}</td>
                             <td>{{ row.area }}</td>
                             <td>{{ row.role }}</td>
@@ -882,6 +892,36 @@
           items.forEach((node) => node.classList.remove("active"));
           item.classList.add("active");
           headerTitle.textContent = item.dataset.title || "Campañas";
+        });
+      });
+
+      const filterButtons = document.querySelectorAll(".ring-button");
+      const rows = document.querySelectorAll(".recipients-table tbody tr");
+      let activeFilter = null;
+
+      const applyFilter = () => {
+        rows.forEach((row) => {
+          if (!activeFilter || !row.dataset[activeFilter]) {
+            row.style.display = "";
+            return;
+          }
+          row.style.display = row.dataset[activeFilter] === "yes" ? "" : "none";
+        });
+      };
+
+      filterButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          const filter = button.dataset.filter;
+          if (activeFilter === filter) {
+            activeFilter = null;
+          } else {
+            activeFilter = filter;
+          }
+          filterButtons.forEach((btn) => btn.classList.remove("active"));
+          if (activeFilter) {
+            button.classList.add("active");
+          }
+          applyFilter();
         });
       });
 

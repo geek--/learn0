@@ -1143,6 +1143,7 @@ def dashboard_v2(request):
     submit_count = 0
     report_count = 0
     recipient_rows = []
+    event_stats = []
     if selected_campaign:
         recipients = (
             CampaignRecipient.objects.filter(campaign=selected_campaign)
@@ -1190,6 +1191,11 @@ def dashboard_v2(request):
     cta_rate = int((cta_count / total_for_rates) * 100)
     submit_rate = int((submit_count / total_for_rates) * 100)
     report_rate = int((report_count / total_for_rates) * 100)
+    event_stats = [
+        {"key": "cta", "label": "Click CTA", "count": cta_count, "rate": cta_rate},
+        {"key": "submit", "label": "Submited Data", "count": submit_count, "rate": submit_rate},
+        {"key": "report", "label": "Report", "count": report_count, "rate": report_rate},
+    ]
 
     context = {
         "campaign_list": campaign_list,
@@ -1205,5 +1211,6 @@ def dashboard_v2(request):
         "submit_rate": submit_rate,
         "report_rate": report_rate,
         "recipient_rows": recipient_rows,
+        "event_stats": event_stats,
     }
     return render(request, "campaigns/dashboard_v2.html", context)
