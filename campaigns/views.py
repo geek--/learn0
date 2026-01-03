@@ -1140,6 +1140,7 @@ def dashboard_v2(request):
             gap: 18px;
             transition: width 0.2s ease;
             z-index: 2;
+            overflow: hidden;
           }
           .sidebar.expanded {
             width: 230px;
@@ -1189,6 +1190,10 @@ def dashboard_v2(request):
             font-weight: 600;
             border: 1px solid transparent;
           }
+          .sidebar:not(.expanded) .nav-item {
+            justify-content: center;
+            padding: 10px 0;
+          }
           .nav-item svg {
             width: 20px;
             height: 20px;
@@ -1207,6 +1212,10 @@ def dashboard_v2(request):
             transform: translateX(-6px);
             transition: opacity 0.2s ease, transform 0.2s ease;
           }
+          .sidebar:not(.expanded) .nav-label,
+          .sidebar:not(.expanded) .brand span {
+            display: none;
+          }
           .sidebar.expanded .nav-label,
           .sidebar.expanded .brand span {
             opacity: 1;
@@ -1222,6 +1231,9 @@ def dashboard_v2(request):
             display: flex;
             flex-direction: column;
             gap: 12px;
+          }
+          .sidebar:not(.expanded) .nav-footer {
+            align-items: center;
           }
           .nav-dot {
             width: 32px;
