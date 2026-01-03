@@ -406,7 +406,14 @@ def dashboard(request):
             f"""
             <a class="campaign-item {'active' if campaign.id == selected_campaign_id else ''}"
                href="?{escape(urlencode(query))}">
-              <div class="campaign-icon">📣</div>
+              <div class="campaign-icon">
+                <svg class="icon icon-muted" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4 10v4"></path>
+                  <path d="M7 9v6"></path>
+                  <path d="M10 7v10"></path>
+                  <path d="M14 6l6 3v6l-6 3z"></path>
+                </svg>
+              </div>
               <div>
                 <div class="campaign-name">{escape(campaign.name)}</div>
                 <div class="campaign-meta">{escape(date_range)}</div>
@@ -459,8 +466,8 @@ def dashboard(request):
           body {{
             margin: 0;
             font-family: "Inter", "Segoe UI", sans-serif;
-            background: #f6f1ef;
-            color: #3b2f33;
+            background: #f2f4f8;
+            color: #0f172a;
           }}
           .shell {{
             min-height: 100vh;
@@ -468,8 +475,8 @@ def dashboard(request):
           }}
           .sidebar {{
             width: 80px;
-            background: #fdf9f7;
-            border-right: 1px solid #e7d7d5;
+            background: #ffffff;
+            border-right: 1px solid #e2e8f0;
             padding: 18px 12px;
             display: flex;
             flex-direction: column;
@@ -480,8 +487,8 @@ def dashboard(request):
             width: 44px;
             height: 44px;
             border-radius: 50%;
-            border: 2px solid #b45b69;
-            color: #b45b69;
+            border: 2px solid #2563eb;
+            color: #0f172a;
             font-weight: 700;
             display: flex;
             align-items: center;
@@ -495,17 +502,17 @@ def dashboard(request):
             width: 38px;
             height: 38px;
             border-radius: 12px;
-            border: 1px solid #e7d7d5;
+            border: 1px solid #e2e8f0;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 18px;
-            color: #9b5661;
+            color: #0f172a;
             background: #ffffff;
           }}
           .nav-item.active {{
-            background: #f3dee1;
-            border-color: #b45b69;
+            background: #e8f1ff;
+            border-color: #2563eb;
           }}
           .content {{
             flex: 1;
@@ -521,12 +528,12 @@ def dashboard(request):
           .page-header h1 {{
             margin: 0;
             font-size: 26px;
-            color: #7b3e4a;
+            color: #0f172a;
           }}
           .page-header p {{
             margin: 6px 0 0;
             font-size: 13px;
-            color: #7a666b;
+            color: #475569;
           }}
           .header-actions {{
             display: flex;
@@ -536,15 +543,15 @@ def dashboard(request):
           .chip {{
             padding: 8px 14px;
             border-radius: 999px;
-            background: #f3dee1;
-            border: 1px solid #d9b0b7;
-            color: #7b3e4a;
+            background: #e8f1ff;
+            border: 1px solid #c7ddff;
+            color: #0f172a;
             font-weight: 600;
             font-size: 12px;
           }}
           .chip.ghost {{
             background: #fff;
-            border-color: #ead4d8;
+            border-color: #e2e8f0;
           }}
           .content-grid {{
             display: grid;
@@ -553,10 +560,10 @@ def dashboard(request):
           }}
           .panel {{
             background: #ffffff;
-            border: 1px solid #ead4d8;
+            border: 1px solid #e2e8f0;
             border-radius: 18px;
             padding: 18px;
-            box-shadow: 0 2px 6px rgba(125, 71, 82, 0.05);
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
           }}
           .campaigns-panel {{
             display: flex;
@@ -566,7 +573,7 @@ def dashboard(request):
           .panel-header {{
             font-size: 13px;
             font-weight: 600;
-            color: #9b5661;
+            color: #2563eb;
           }}
           .search-input {{
             display: flex;
@@ -574,8 +581,8 @@ def dashboard(request):
             gap: 8px;
             padding: 10px 12px;
             border-radius: 12px;
-            border: 1px solid #ead4d8;
-            background: #fdf9f7;
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
           }}
           .search-input input {{
             border: none;
@@ -583,13 +590,13 @@ def dashboard(request):
             background: transparent;
             flex: 1;
             font-size: 13px;
-            color: #6f565c;
+            color: #0f172a;
           }}
           .search-btn {{
             border: none;
             background: transparent;
             font-size: 16px;
-            color: #9b5661;
+            color: #2563eb;
             cursor: pointer;
           }}
           .campaign-list {{
@@ -605,17 +612,17 @@ def dashboard(request):
             border: 1px solid transparent;
             text-decoration: none;
             color: inherit;
-            background: #fcf7f6;
+            background: #f8fafc;
           }}
           .campaign-item.active {{
-            border-color: #c77b89;
-            background: #f4e3e6;
+            border-color: #2563eb;
+            background: #e8f1ff;
           }}
           .campaign-icon {{
             width: 36px;
             height: 36px;
             border-radius: 12px;
-            background: #f3dee1;
+            background: #e8f1ff;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -627,7 +634,7 @@ def dashboard(request):
           }}
           .campaign-meta {{
             font-size: 12px;
-            color: #846a70;
+            color: #475569;
           }}
           .detail-header {{
             display: flex;
@@ -638,11 +645,11 @@ def dashboard(request):
           .detail-title {{
             font-size: 18px;
             font-weight: 700;
-            color: #7b3e4a;
+            color: #0f172a;
           }}
           .detail-sub {{
             font-size: 13px;
-            color: #7a666b;
+            color: #475569;
           }}
           .detail-main {{
             display: grid;
@@ -655,12 +662,12 @@ def dashboard(request):
             text-align: center;
             padding: 14px;
             border-radius: 16px;
-            border: 1px solid #f0d5da;
-            background: #fff7f8;
+            border: 1px solid #e2e8f0;
+            background: #ffffff;
           }}
           .donut-title {{
             font-size: 12px;
-            color: #9b5661;
+            color: #2563eb;
             text-transform: uppercase;
             letter-spacing: 0.6px;
           }}
@@ -671,7 +678,7 @@ def dashboard(request):
           }}
           .donut-label {{
             font-size: 12px;
-            color: #7a666b;
+            color: #475569;
             margin-top: 6px;
           }}
           .donut-canvas {{
@@ -683,8 +690,8 @@ def dashboard(request):
             text-align: center;
             padding: 12px;
             border-radius: 14px;
-            border: 1px solid #f0d5da;
-            background: #fff;
+            border: 1px solid #e2e8f0;
+            background: #ffffff;
           }}
           .mini-donut canvas {{
             width: 80px;
@@ -692,13 +699,13 @@ def dashboard(request):
           }}
           .mini-label {{
             font-size: 12px;
-            color: #7a666b;
+            color: #475569;
             margin-top: 6px;
           }}
           .detail-table h4 {{
             margin: 0 0 8px;
             font-size: 13px;
-            color: #9b5661;
+            color: #2563eb;
             text-transform: uppercase;
             letter-spacing: 0.4px;
           }}
@@ -711,16 +718,26 @@ def dashboard(request):
           .detail-table td {{
             text-align: left;
             padding: 10px 6px;
-            border-bottom: 1px solid #f1dfe2;
+            border-bottom: 1px solid #e2e8f0;
           }}
           .detail-table th {{
-            color: #9b5661;
+            color: #2563eb;
             font-weight: 600;
             font-size: 12px;
           }}
           .muted {{
-            color: #9a8086;
+            color: #64748b;
             font-size: 12px;
+          }}
+          .icon {{
+            width: 18px;
+            height: 18px;
+            stroke: #0f172a;
+            stroke-width: 1.7;
+            fill: none;
+          }}
+          .icon-muted {{
+            stroke: #2563eb;
           }}
         </style>
       </head>
@@ -729,11 +746,34 @@ def dashboard(request):
           <aside class="sidebar">
             <div class="brand">WT</div>
             <div class="nav">
-              <div class="nav-item">⋯</div>
-              <div class="nav-item active">📊</div>
-              <div class="nav-item">✉️</div>
+              <div class="nav-item">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <circle cx="5" cy="12" r="1.5"></circle>
+                  <circle cx="12" cy="12" r="1.5"></circle>
+                  <circle cx="19" cy="12" r="1.5"></circle>
+                </svg>
+              </div>
+              <div class="nav-item active">
+                <svg class="icon icon-muted" viewBox="0 0 24 24" aria-hidden="true">
+                  <rect x="4" y="4" width="7" height="7" rx="1.5"></rect>
+                  <rect x="13" y="4" width="7" height="7" rx="1.5"></rect>
+                  <rect x="4" y="13" width="7" height="7" rx="1.5"></rect>
+                  <rect x="13" y="13" width="7" height="7" rx="1.5"></rect>
+                </svg>
+              </div>
+              <div class="nav-item">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4 6h16v12H4z"></path>
+                  <path d="M4 7l8 6 8-6"></path>
+                </svg>
+              </div>
             </div>
-            <div class="nav-item">⚙️</div>
+            <div class="nav-item">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="3.5"></circle>
+                <path d="M19 12l2-1-2-1-1-2 1-2-2-1-1-2-2 1-2-1-2 1-2-1-2 1 1 2-1 2 1 2-1 2 2 1 1 2 2-1 2 1 2-1 2 1 1-2 2-1-1-2 1-2z"></path>
+              </svg>
+            </div>
           </aside>
           <main class="content">
             <header class="page-header">
@@ -752,7 +792,12 @@ def dashboard(request):
                 <form class="search-input" method="get">
                   <input type="hidden" name="campaign" value="{selected_campaign_id or ''}" />
                   <input type="text" name="q" value="{escape(search_term)}" placeholder="Buscar por nombre" />
-                  <button class="search-btn" type="submit">🔍</button>
+                  <button class="search-btn" type="submit" aria-label="Buscar">
+                    <svg class="icon icon-muted" viewBox="0 0 24 24" aria-hidden="true">
+                      <circle cx="11" cy="11" r="6"></circle>
+                      <path d="M20 20l-3.5-3.5"></path>
+                    </svg>
+                  </button>
                 </form>
                 <div class="campaign-list">
                   {"".join(campaign_items) if campaign_items else '<div class="muted">Sin campañas disponibles.</div>'}
@@ -812,14 +857,14 @@ def dashboard(request):
               type: "doughnut",
               data: {{
                 labels: ["Valor", "Restante"],
-                datasets: [{{ data: [value, 100 - value], backgroundColor: [color, "#f2e4e7"] }}],
+                datasets: [{{ data: [value, 100 - value], backgroundColor: [color, "#e2e8f0"] }}],
               }},
               options: {{ plugins: {{ legend: {{ display: false }} }}, cutout: "72%" }},
             }});
           }};
-          buildDonut("openChart", {open_rate}, "#b45b69");
-          buildDonut("ctaChart", {cta_rate}, "#d3929e");
-          buildDonut("submitChart", {submit_rate}, "#9b5661");
+          buildDonut("openChart", {open_rate}, "#2563eb");
+          buildDonut("ctaChart", {cta_rate}, "#0f172a");
+          buildDonut("submitChart", {submit_rate}, "#1d4ed8");
         </script>
       </body>
     </html>
