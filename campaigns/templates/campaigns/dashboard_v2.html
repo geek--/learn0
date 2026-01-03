@@ -336,6 +336,28 @@
         color: #1d4ed8;
         border-color: #1d4ed8;
       }
+      .summary-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+        padding: 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        background: #ffffff;
+        max-width: 240px;
+      }
+      .summary-value {
+        font-size: 28px;
+        font-weight: 700;
+        color: #111827;
+      }
+      .summary-label {
+        font-size: 12px;
+        color: #6b7280;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
       .canvas {
         background: #ffffff;
         border: 1px solid #e5e7eb;
@@ -447,17 +469,18 @@
         <section class="content">
           <div class="content-grid">
             <aside class="panel">
-              <div class="search">
+              <form class="search" method="get">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                   <circle cx="11" cy="11" r="7"></circle>
                   <path d="M16.5 16.5L21 21"></path>
                 </svg>
-                <input type="text" placeholder="Buscar campaña" />
-              </div>
+                <input type="text" name="q" value="{{ query }}" placeholder="Buscar campaña" />
+              </form>
               <div class="campaign-list">
                 {% if campaign_list %}
                   {% for campaign in campaign_list %}
-                    <a class="campaign-card {% if campaign.is_active %}active{% endif %}" href="#">
+                    <a class="campaign-card {% if campaign.is_active %}active{% endif %}"
+                       href="?campaign={{ campaign.id }}{% if query %}&q={{ query|urlencode }}{% endif %}">
                       <div class="campaign-avatar">{{ campaign.initials }}</div>
                       <div>
                         <div class="campaign-name">{{ campaign.name }}</div>
@@ -493,6 +516,10 @@
                   <a href="#">Usuarios</a>
                   <a href="#">Areas</a>
                 </nav>
+                <div class="summary-card">
+                  <div class="summary-value">{{ total_recipients }}</div>
+                  <div class="summary-label">Usuarios totales</div>
+                </div>
               </div>
             </div>
           </div>

@@ -1104,7 +1104,11 @@ def dashboard(request):
 @require_GET
 def dashboard_v2(request):
     campaigns = Campaign.objects.order_by("-start_at")
-    selected_campaign = campaigns.first()
+    query = request.GET.get("q", "").strip()
+    if query:
+        campaigns = campaigns.filter(name__icontains=query)
+    selected_campaign_id = request.GET.get("campaign")
+    selected_campaign = campaigns.filter(id=selected_campaign_id).first() if selected_campaign_id else campaigns.first()
     selected_campaign_initials = (
         "".join(word[0] for word in selected_campaign.name.split()[:2]).upper()
         if selected_campaign
@@ -1125,14 +1129,21 @@ def dashboard_v2(request):
                 "initials": initials,
                 "name": campaign.name,
                 "date_range": date_range,
-                "is_active": index == 0,
+                "is_active": campaign.id == selected_campaign.id if selected_campaign else index == 0,
+                "id": campaign.id,
             }
         )
+
+    total_recipients = (
+        CampaignRecipient.objects.filter(campaign=selected_campaign).count() if selected_campaign else 0
+    )
 
     context = {
         "campaign_list": campaign_list,
         "selected_campaign": selected_campaign,
         "selected_campaign_initials": selected_campaign_initials,
         "selected_campaign_date": selected_campaign_date,
+        "total_recipients": total_recipients,
+        "query": query,
     }
     return render(request, "campaigns/dashboard_v2.html", context)
