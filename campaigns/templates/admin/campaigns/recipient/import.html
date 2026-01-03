@@ -1,0 +1,16 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+  <h1>Importar usuarios desde Excel</h1>
+  <p>El archivo debe incluir las columnas: email, nombres, apellido paterno, apellido materno, rol, area.</p>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div>
+      <input type="file" name="excel_file" accept=".xlsx,.xls" required />
+    </div>
+    <div style="margin-top: 16px;">
+      <button type="submit" class="default">Importar</button>
+      <a href=".." class="button">Cancelar</a>
+    </div>
+  </form>
+{% endblock %}

@@ -5,7 +5,7 @@ from urllib.parse import urlencode
 
 from django.db import models
 from django.http import HttpResponse, JsonResponse
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import escape
@@ -1099,3 +1099,118 @@ def dashboard(request):
     body_v2 = body_v3
     body = body_v3
     return HttpResponse(body_v3, content_type="text/html")
+
+
+@require_GET
+def dashboard_v2(request):
+    campaigns = Campaign.objects.order_by("-start_at")
+    query = request.GET.get("q", "").strip()
+    if query:
+        campaigns = campaigns.filter(name__icontains=query)
+    selected_campaign_id = request.GET.get("campaign")
+    selected_campaign = campaigns.filter(id=selected_campaign_id).first() if selected_campaign_id else campaigns.first()
+    selected_campaign_initials = (
+        "".join(word[0] for word in selected_campaign.name.split()[:2]).upper()
+        if selected_campaign
+        else "--"
+    )
+    selected_campaign_date = (
+        f"{selected_campaign.start_at:%d %b %Y} · {selected_campaign.end_at:%d %b %Y}"
+        if selected_campaign
+        else ""
+    )
+
+    campaign_list = []
+    for index, campaign in enumerate(campaigns):
+        initials = "".join(word[0] for word in campaign.name.split()[:2]).upper() or "--"
+        date_range = f"{campaign.start_at:%d %b %Y} · {campaign.end_at:%d %b %Y}"
+        campaign_list.append(
+            {
+                "initials": initials,
+                "name": campaign.name,
+                "date_range": date_range,
+                "is_active": campaign.id == selected_campaign.id if selected_campaign else index == 0,
+                "id": campaign.id,
+            }
+        )
+
+    total_recipients = (
+        CampaignRecipient.objects.filter(campaign=selected_campaign).count() if selected_campaign else 0
+    )
+    sent_count = 0
+    opened_count = 0
+    cta_count = 0
+    submit_count = 0
+    report_count = 0
+    recipient_rows = []
+    event_stats = []
+    if selected_campaign:
+        recipients = (
+            CampaignRecipient.objects.filter(campaign=selected_campaign)
+            .select_related("recipient")
+            .order_by("-created_at")
+        )
+        sent_count = recipients.filter(
+            models.Q(sent_at__isnull=False) | models.Q(status=CampaignRecipient.Status.SENT)
+        ).count()
+        opened_count = recipients.filter(
+            models.Q(opened_at__isnull=False) | models.Q(open_seen_at__isnull=False)
+        ).count()
+        cta_count = recipients.filter(cta_click_count__gt=0).count()
+        submit_count = recipients.filter(submit_attempted=True).count()
+        report_count = recipients.filter(reported_at__isnull=False).count()
+        for item in recipients:
+            recipient = item.recipient
+            full_name = (
+                recipient.full_name
+                or " ".join(
+                    part
+                    for part in [
+                        recipient.first_name,
+                        recipient.last_name_paternal,
+                        recipient.last_name_maternal,
+                    ]
+                    if part
+                ).strip()
+                or recipient.email
+            )
+            recipient_rows.append(
+                {
+                    "name": full_name,
+                    "area": recipient.area or recipient.department or "--",
+                    "role": recipient.role or "--",
+                    "opened": item.opened_at is not None or item.open_seen_at is not None,
+                    "cta": item.cta_click_count > 0,
+                    "submit": item.submit_attempted,
+                    "report": item.reported_at is not None,
+                }
+            )
+
+    total_for_rates = total_recipients or 1
+    open_rate = int((opened_count / total_for_rates) * 100)
+    cta_rate = int((cta_count / total_for_rates) * 100)
+    submit_rate = int((submit_count / total_for_rates) * 100)
+    report_rate = int((report_count / total_for_rates) * 100)
+    event_stats = [
+        {"key": "cta", "label": "Click CTA", "count": cta_count, "rate": cta_rate},
+        {"key": "submit", "label": "Submited Data", "count": submit_count, "rate": submit_rate},
+        {"key": "report", "label": "Report", "count": report_count, "rate": report_rate},
+    ]
+
+    context = {
+        "campaign_list": campaign_list,
+        "selected_campaign": selected_campaign,
+        "selected_campaign_initials": selected_campaign_initials,
+        "selected_campaign_date": selected_campaign_date,
+        "total_recipients": total_recipients,
+        "query": query,
+        "sent_count": sent_count,
+        "opened_count": opened_count,
+        "open_rate": open_rate,
+        "cta_rate": cta_rate,
+        "submit_rate": submit_rate,
+        "report_rate": report_rate,
+        "recipient_rows": recipient_rows,
+        "event_stats": event_stats,
+    }
+    return render(request, "campaigns/dashboard_v2.html", context)

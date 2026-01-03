@@ -14,6 +14,11 @@ class Campaign(models.Model):
     email_template = models.TextField()
     landing_slug = models.SlugField(max_length=120)
     throttle_per_minute = models.PositiveIntegerField(default=60)
+    recipient_tags = models.ManyToManyField(
+        "RecipientTag",
+        blank=True,
+        related_name="campaigns",
+    )
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
@@ -29,11 +34,29 @@ class Campaign(models.Model):
 class Recipient(models.Model):
     email = models.EmailField(unique=True)
     full_name = models.CharField(max_length=255, blank=True)
+    first_name = models.CharField(max_length=255, blank=True)
+    last_name_paternal = models.CharField(max_length=255, blank=True)
+    last_name_maternal = models.CharField(max_length=255, blank=True)
+    role = models.CharField(max_length=255, blank=True)
+    area = models.CharField(max_length=255, blank=True)
     department = models.CharField(max_length=255, blank=True)
+    tags = models.ManyToManyField(
+        "RecipientTag",
+        blank=True,
+        related_name="recipients",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self) -> str:
         return self.email
+
+
+class RecipientTag(models.Model):
+    name = models.CharField(max_length=120, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self) -> str:
+        return self.name
 
 
 class CampaignRecipient(models.Model):
